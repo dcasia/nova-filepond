@@ -19,25 +19,22 @@ class Filepond extends Field
     public $component = 'filepond';
 
     private $disk = 'public';
+    private $multiple = false;
     private $directory = null;
 
-    public function __construct($name, $attribute = null, callable $resolveCallback = null)
+    public function disable(): self
     {
-        parent::__construct($name, $attribute, $resolveCallback);
-
-        $this->withMeta([
-            'multiple' => true,
-            'mimesTypes' => [ 'image/jpeg', 'image/png', 'image/svg+xml' ]
-        ]);
+        return $this->withMeta([ 'disabled' => true ]);
     }
 
     public function single(): self
     {
+        return $this->withMeta([ 'multiple' => false ]);
+    }
 
-        $this->withMeta([ 'multiple' => false ]);
-
-        return $this;
-
+    public function multiple(): self
+    {
+        return $this->withMeta([ 'multiple' => true ]);
     }
 
     /**
@@ -126,7 +123,7 @@ class Filepond extends Field
 
         }
 
-        if ($this->meta[ 'multiple' ] === false) {
+        if ($this->multiple === false) {
 
             $serverId = $request->input($requestAttribute);
 
@@ -141,7 +138,6 @@ class Filepond extends Field
             $file = new File(static::getPathFromServerId($serverId));
             $path = $file->move(Storage::disk($this->disk)->path($this->directory))
                          ->getBasename();
-
 
             $model->setAttribute($attribute, $path);
 
@@ -174,7 +170,7 @@ class Filepond extends Field
 
     }
 
-    private function removeImages(Collection $images)
+    private function removeImages(Collection $images): void
     {
 
         foreach ($images as $image) {
@@ -193,8 +189,9 @@ class Filepond extends Field
      *
      * @return mixed
      */
-    protected function resolveAttribute($resource, $attribute)
+    protected function resolveAttribute($resource, $attribute): Collection
     {
+
         $value = parent::resolveAttribute($resource, $attribute);
 
         return collect($value)->map(function ($value) {
@@ -204,6 +201,23 @@ class Filepond extends Field
                     'type' => 'local'
                 ]
             ];
+        });
+
+    }
+
+    private function getThumbnails(): Collection
+    {
+
+        if ($this->value->isEmpty()) {
+
+            return collect();
+
+        }
+
+        return $this->value->map(function ($value) {
+
+            return Storage::disk($this->disk)->url($value[ 'source' ]);
+
         });
 
     }
@@ -241,6 +255,9 @@ class Filepond extends Field
     {
         return array_merge([
             'disk' => $this->disk,
+            'multiple' => $this->multiple,
+            'disabled' => false,
+            'thumbnails' => $this->getThumbnails()
         ], $this->meta(), parent::jsonSerialize());
     }
 

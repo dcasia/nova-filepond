@@ -9,8 +9,9 @@
                 :ref="`${field.attribute}Filepond`"
                 label-idle="Drop files here..."
                 :allow-multiple="field.multiple"
-                :disabled="false"
+                :disabled="field.disabled"
                 :required="true"
+                :imagePreviewHeight="200"
                 :instant-upload="true"
                 :accepted-file-types="field.mimesTypes"
                 :server="serverOptions"
@@ -28,36 +29,34 @@
 
     import {FormField, HandlesValidationErrors} from 'laravel-nova'
     import vueFilePond from 'vue-filepond'
-    import 'filepond/dist/filepond.min.css'
-    import 'filepond-plugin-image-preview/dist/filepond-plugin-image-preview.min.css'
-    import 'filepond-plugin-image-edit/dist/filepond-plugin-image-edit.css'
-    import 'filepond-plugin-media-preview/dist/filepond-plugin-media-preview.css'
-    import 'filepond-plugin-image-overlay/dist/filepond-plugin-image-overlay.css'
     import FilePondPluginFileValidateType from 'filepond-plugin-file-validate-type'
     import FilePondPluginImagePreview from 'filepond-plugin-image-preview'
-    import FilePondPluginImageOverlay from 'filepond-plugin-image-overlay'
     import FilePondPluginMediaPreview from 'filepond-plugin-media-preview'
+    import FilePondPluginImageOverlay from 'filepond-plugin-image-overlay'
     import FilePondPluginImageExifOrientation from 'filepond-plugin-image-exif-orientation'
+
+    import 'filepond/dist/filepond.min.css'
+    import 'filepond-plugin-image-preview/dist/filepond-plugin-image-preview.min.css'
+    import 'filepond-plugin-media-preview/dist/filepond-plugin-media-preview.css'
+    import 'filepond-plugin-image-overlay/dist/filepond-plugin-image-overlay.css'
 
     const FilePond = vueFilePond(
         FilePondPluginImageExifOrientation,
         FilePondPluginFileValidateType,
         FilePondPluginImagePreview,
-        // FilePondPluginImageEdit,
-        // FilePondPluginImageCrop,
-        // FilePondPluginImageTransform,
-        // FilePondPluginImageResize,
         FilePondPluginImageOverlay,
         FilePondPluginMediaPreview
     )
 
     export default {
         components: {FilePond},
+
         mixins: [FormField, HandlesValidationErrors],
 
         props: ['resourceName', 'resourceId', 'field'],
 
         data() {
+
             return {
                 files: [...this.field.value],
                 serverOptions: {
@@ -68,7 +67,6 @@
                         url: '/process',
                         ondata: formData => {
                             formData.append('attribute', this.field.attribute)
-                            formData.append('tempDirectory', this.field.tempDirectory)
                             return formData
                         },
                         onerror: data => {
@@ -80,14 +78,17 @@
                     }
                 }
             }
+
         },
 
         computed: {
+
             filepondInstance() {
 
                 return this.$refs[`${this.field.attribute}Filepond`]
 
             }
+
         },
 
         methods: {
@@ -102,6 +103,7 @@
                     .map(file => file.serverId)
 
             },
+
             updateFiles() {
 
                 this.value = this.getActiveFiles()
@@ -112,7 +114,9 @@
              * Set the initial, internal value for the field.
              */
             setInitialValue() {
+
                 this.value = this.getActiveFiles()
+
             },
 
             /**
@@ -132,7 +136,6 @@
              * Update the field's internal value.
              */
             handleChange(value) {
-                console.log('handlechange')
                 this.value = value
             }
         }
@@ -140,8 +143,15 @@
 </script>
 
 <style>
+    .filepond--root {
+        transition: all 250ms;
+    }
+
     .filepond--fullsize-overlay {
         position: fixed;
         z-index: 20;
+    }
+    .filepond--item {
+        width: calc(50% - .5em);
     }
 </style>
