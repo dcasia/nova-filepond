@@ -2,7 +2,6 @@
 
 namespace DigitalCreative\Filepond\Http\Controllers;
 
-use App\Nova\BloodTube;
 use DigitalCreative\Filepond\Filepond;
 use Illuminate\Foundation\Validation\ValidatesRequests;
 use Illuminate\Http\Request;
@@ -10,6 +9,7 @@ use Illuminate\Routing\Controller as BaseController;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\ValidationException;
 use Laravel\Nova\Http\Requests\NovaRequest;
+use Laravel\Nova\Nova;
 
 class FilepondController extends BaseController
 {
@@ -27,10 +27,12 @@ class FilepondController extends BaseController
     {
 
         $file = $request->file($request->input('attribute'));
+        $resourceName = $request->input('resourceName');
 
         try {
 
-            $rules = BloodTube::rulesForCreation(app(NovaRequest::class));
+            $resourceClass = Nova::resourceForKey($resourceName);
+            $rules = $resourceClass::rulesForCreation(app(NovaRequest::class));
 
             $this->validate($request, $rules);
 

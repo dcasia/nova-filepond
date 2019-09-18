@@ -43,6 +43,11 @@ class Filepond extends Field
         return $this->withMeta([ 'limit' => $amount ]);
     }
 
+    public function mimesTypes(array $mimesTypes): self
+    {
+        return $this->withMeta([ 'mimesTypes' => is_array($mimesTypes) ? $mimesTypes : func_get_args() ]);
+    }
+
     public function single(): self
     {
         $this->multiple = false;
@@ -281,6 +286,7 @@ class Filepond extends Field
             'columns' => $this->multiple ? 2 : 1,
             'fullWidth' => false,
             'limit' => null,
+            'resourceClass' => '',
         ], $this->meta(), parent::jsonSerialize());
     }
 

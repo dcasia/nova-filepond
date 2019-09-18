@@ -55,6 +55,7 @@
                         url: '/process',
                         ondata: formData => {
                             formData.append('attribute', this.field.attribute)
+                            formData.append('resourceName', this.$route.params.resourceName)
                             return formData
                         },
                         onerror: data => {
