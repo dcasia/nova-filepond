@@ -2,10 +2,11 @@
 
     <panel-item :field="field">
 
-        <file-pond
+        <file-pond-wrapper
             slot="value"
             :disabled="true"
             :allow-image-preview="!field.multiple"
+            :limit="field.value.length"
             :field="field"/>
 
     </panel-item>
@@ -14,10 +15,10 @@
 
 <script>
 
-    import FilePond from './FilePond'
+    import FilePondWrapper from './FilePondWrapper'
 
     export default {
-        components: {FilePond},
+        components: {FilePondWrapper},
         props: ['resource', 'resourceName', 'resourceId', 'field']
     }
 

@@ -18,8 +18,13 @@
 <script>
     export default {
         props: ['resourceName', 'field'],
-        mounted() {
-            console.log(this.field)
-        }
     }
 </script>
+
+<style scoped>
+
+    img:not(:last-child) {
+        margin-right: 0.4rem;
+    }
+
+</style>

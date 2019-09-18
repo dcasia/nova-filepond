@@ -2,11 +2,17 @@
 
     <file-pond
         v-bind="$attrs"
+        ref="filepond"
+        :style="cssVars"
         :name="field.attribute"
+        :image-preview-height="field.multiple ? 150 : null"
         label-idle="Drop files here..."
         :allow-multiple="field.multiple"
+        :accepted-file-types="field.mimesTypes"
         :instant-upload="true"
+        :max-files="limit || field.limit"
         :server="serverOptions"
+        :disabled="field.disabled"
         :files="files"/>
 
 </template>
@@ -36,10 +42,7 @@
     export default {
         inheritAttrs: false,
         components: {FilePond},
-        props: ['field'],
-        mounted() {
-            console.log('mounted', this.field)
-        },
+        props: ['field', 'errors', 'columns', 'limit'   ],
         data() {
 
             return {
@@ -64,11 +67,26 @@
                 }
             }
 
+        },
+        computed: {
+            instance() {
+                return this.$refs.filepond
+            },
+            cssVars() {
+                return {
+                    '--filepond-column': (100 / (this.columns || this.field.columns)) + '%'
+                }
+            }
         }
     }
 </script>
 
 <style>
+
+    :root {
+        --filepond-column: 100%
+    }
+
     .filepond--root {
         transition: all 250ms;
     }
@@ -79,6 +97,7 @@
     }
 
     .filepond--item {
-        width: calc(50% - .5em);
+        width: calc(var(--filepond-column) - .5em);
     }
+
 </style>

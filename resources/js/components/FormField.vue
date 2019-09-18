@@ -1,21 +1,13 @@
 <template>
 
-    <default-field :field="field" :errors="errors">
+    <default-field :field="field" :errors="errors" :full-width-content="field.fullWidth">
 
         <template slot="field">
 
-            <file-pond
-                :name="field.attribute"
+            <file-pond-wrapper
                 :ref="`${field.attribute}Filepond`"
-                label-idle="Drop files here..."
-                :allow-multiple="field.multiple"
-                :disabled="field.disabled"
-                :required="true"
-                :imagePreviewHeight="200"
-                :instant-upload="true"
-                :accepted-file-types="field.mimesTypes"
-                :server="serverOptions"
-                :files="files"
+                :field="field"
+                :errors="errors"
                 :onprocessfile="updateFiles"
                 :onremovefile="updateFiles"/>
 
@@ -28,64 +20,20 @@
 <script>
 
     import {FormField, HandlesValidationErrors} from 'laravel-nova'
-    import vueFilePond from 'vue-filepond'
-    import FilePondPluginFileValidateType from 'filepond-plugin-file-validate-type'
-    import FilePondPluginImagePreview from 'filepond-plugin-image-preview'
-    import FilePondPluginMediaPreview from 'filepond-plugin-media-preview'
-    import FilePondPluginImageOverlay from 'filepond-plugin-image-overlay'
-    import FilePondPluginImageExifOrientation from 'filepond-plugin-image-exif-orientation'
-
-    import 'filepond/dist/filepond.min.css'
-    import 'filepond-plugin-image-preview/dist/filepond-plugin-image-preview.min.css'
-    import 'filepond-plugin-media-preview/dist/filepond-plugin-media-preview.css'
-    import 'filepond-plugin-image-overlay/dist/filepond-plugin-image-overlay.css'
-
-    const FilePond = vueFilePond(
-        FilePondPluginImageExifOrientation,
-        FilePondPluginFileValidateType,
-        FilePondPluginImagePreview,
-        FilePondPluginImageOverlay,
-        FilePondPluginMediaPreview
-    )
+    import FilePondWrapper from './FilePondWrapper'
 
     export default {
-        components: {FilePond},
+        components: {FilePondWrapper},
 
         mixins: [FormField, HandlesValidationErrors],
 
         props: ['resourceName', 'resourceId', 'field'],
 
-        data() {
-
-            return {
-                files: [...this.field.value],
-                serverOptions: {
-                    url: '/nova-vendor/nova-filepond',
-                    revert: '/revert',
-                    load: `/load/?disk=${this.field.disk}&serverId=`,
-                    process: {
-                        url: '/process',
-                        ondata: formData => {
-                            formData.append('attribute', this.field.attribute)
-                            return formData
-                        },
-                        onerror: data => {
-                            this.errors.record(JSON.parse(data).errors)
-                        }
-                    },
-                    headers: {
-                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
-                    }
-                }
-            }
-
-        },
-
         computed: {
 
             filepondInstance() {
 
-                return this.$refs[`${this.field.attribute}Filepond`]
+                return this.$refs[`${this.field.attribute}Filepond`].instance
 
             }
 
@@ -141,17 +89,3 @@
         }
     }
 </script>
-
-<style>
-    .filepond--root {
-        transition: all 250ms;
-    }
-
-    .filepond--fullsize-overlay {
-        position: fixed;
-        z-index: 20;
-    }
-    .filepond--item {
-        width: calc(50% - .5em);
-    }
-</style>

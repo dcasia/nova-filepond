@@ -7,6 +7,7 @@ use Illuminate\Http\File;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Storage;
 use Laravel\Nova\Fields\Field;
+use Laravel\Nova\Http\Controllers\ResourceShowController;
 use Laravel\Nova\Http\Requests\NovaRequest;
 
 class Filepond extends Field
@@ -27,14 +28,33 @@ class Filepond extends Field
         return $this->withMeta([ 'disabled' => true ]);
     }
 
+    public function fullWidth(): self
+    {
+        return $this->withMeta([ 'fullWidth' => true ]);
+    }
+
+    public function columns(int $columns): self
+    {
+        return $this->withMeta([ 'columns' => $columns ]);
+    }
+
+    public function limit(int $amount): self
+    {
+        return $this->withMeta([ 'limit' => $amount ]);
+    }
+
     public function single(): self
     {
-        return $this->withMeta([ 'multiple' => false ]);
+        $this->multiple = false;
+
+        return $this;
     }
 
     public function multiple(): self
     {
-        return $this->withMeta([ 'multiple' => true ]);
+        $this->multiple = true;
+
+        return $this;
     }
 
     /**
@@ -256,8 +276,11 @@ class Filepond extends Field
         return array_merge([
             'disk' => $this->disk,
             'multiple' => $this->multiple,
-            'disabled' => false,
-            'thumbnails' => $this->getThumbnails()
+            'disabled' => request()->route()->controller instanceof ResourceShowController,
+            'thumbnails' => $this->getThumbnails(),
+            'columns' => $this->multiple ? 2 : 1,
+            'fullWidth' => false,
+            'limit' => null,
         ], $this->meta(), parent::jsonSerialize());
     }
 
