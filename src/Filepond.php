@@ -98,6 +98,19 @@ class Filepond extends Field
         return $this;
     }
 
+    public function withDoka(array $options = []): self
+    {
+        return $this->withMeta([
+            'dokaEnabled' => true,
+            'dokaOptions' => array_merge(config('nova-filepond.doka.options', []), $options)
+        ]);
+    }
+
+    public function withoutDoka(): self
+    {
+        return $this->withMeta([ 'dokaEnabled' => false ]);
+    }
+
     /**
      * @param string $disk
      * @param string|null $directory
@@ -341,6 +354,8 @@ class Filepond extends Field
             'fullWidth' => false,
             'limit' => null,
             'resourceClass' => '',
+            'dokaOptions' => config('nova-filepond.doka.options'),
+            'dokaEnabled' => config('nova-filepond.doka.enabled'),
         ], $this->meta(), parent::jsonSerialize());
     }
 

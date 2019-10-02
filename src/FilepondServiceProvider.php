@@ -7,7 +7,7 @@ use Illuminate\Support\ServiceProvider;
 use Laravel\Nova\Events\ServingNova;
 use Laravel\Nova\Nova;
 
-class FieldServiceProvider extends ServiceProvider
+class FilepondServiceProvider extends ServiceProvider
 {
     /**
      * Bootstrap any application services.
@@ -16,13 +16,28 @@ class FieldServiceProvider extends ServiceProvider
      */
     public function boot()
     {
+
+        $this->publishes([
+            __DIR__ . '/../config/nova-filepond.php' => config_path('nova-filepond.php'),
+        ], 'config');
+
         $this->app->booted(function () {
             $this->routes();
         });
 
         Nova::serving(function (ServingNova $event) {
-            Nova::script('filepond', __DIR__ . '/../dist/js/field.js');
+
+            Nova::script('filepond-main', __DIR__ . '/../dist/js/field.js');
+
+            if (config('nova-filepond.doka.enabled')) {
+
+                Nova::script('filepond-doka', config('nova-filepond.doka.js_path'));
+                Nova::style('filepond-doka-style', config('nova-filepond.doka.css_path'));
+
+            }
+
         });
+
     }
 
     /**
@@ -48,6 +63,6 @@ class FieldServiceProvider extends ServiceProvider
      */
     public function register()
     {
-        //
+        $this->mergeConfigFrom(__DIR__ . '/../config/nova-filepond.php', 'nova-filepond');
     }
 }

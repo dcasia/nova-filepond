@@ -12,6 +12,9 @@
         :instant-upload="true"
         :max-files="limit || field.limit"
         :server="serverOptions"
+        :imageEditEditor="editorInstance"
+        :imageEditInstantEdit="true"
+        imageCropAspectRatio="1:1"
         :disabled="field.disabled"
         :files="files"/>
 
@@ -30,6 +33,12 @@
     import 'filepond-plugin-image-preview/dist/filepond-plugin-image-preview.min.css'
     import 'filepond-plugin-media-preview/dist/filepond-plugin-media-preview.css'
     import 'filepond-plugin-image-overlay/dist/filepond-plugin-image-overlay.css'
+    import 'filepond-plugin-image-edit/dist/filepond-plugin-image-edit.min.css'
+
+    import FilePondPluginImageEdit from 'filepond-plugin-image-edit'
+    import FilePondPluginImageCrop from 'filepond-plugin-image-crop'
+    import FilePondPluginImageResize from 'filepond-plugin-image-resize'
+    import FilePondPluginImageTransform from 'filepond-plugin-image-transform'
 
     const FilePond = vueFilePond(
         FilePondPluginImageExifOrientation,
@@ -37,6 +46,10 @@
         FilePondPluginImagePreview,
         FilePondPluginImageOverlay,
         FilePondPluginMediaPreview,
+        FilePondPluginImageEdit,
+        FilePondPluginImageCrop,
+        FilePondPluginImageResize,
+        FilePondPluginImageTransform
     )
 
     export default {
@@ -45,7 +58,30 @@
         props: ['field', 'errors', 'columns', 'limit'],
         data() {
 
+            let editorInstance = null
+
+            if (this.field.dokaEnabled) {
+
+                if (typeof Doka !== 'object') {
+
+                    console.log('Doka not found!, please read the documentation: https://github.com/dcasia/nova-filepond')
+
+                } else {
+
+                    if (this.field.dokaOptions.cropMask) {
+
+                        this.field.dokaOptions.cropMask = eval(this.field.dokaOptions.cropMask)
+
+                    }
+
+                    editorInstance = Doka.create(this.field.dokaOptions || {})
+
+                }
+
+            }
+
             return {
+                editorInstance: editorInstance,
                 files: [...this.field.value],
                 nameField: this.field.attribute,
                 serverOptions: {

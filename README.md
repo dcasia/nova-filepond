@@ -60,6 +60,50 @@ class Post extends Model {
 }
 ```
 
+# Enabling [Doka Image Editor](https://pqina.nl/doka/?ref=nova-filepond)
+
+To enable Doka editor, first publish the configuration file:
+
+```bash
+php artisan vendor:publish --provider="DigitalCreative\Filepond\FilepondServiceProvider" --tag="config"
+```
+
+Set `doka.enabled` to `true` and update the path to the `doka.min.js` and `doka.min.css`
+
+```php
+'doka' => [
+    'enabled' => true,
+    'js_path' => public_path('doka.min.js'), // this assumes you places theses files within your public directory
+    'css_path' => public_path('doka.min.css'),
+]
+```
+
+Two options are available to enable/disable Doka on a given field, `->withDoka($options)` accepts a list of options, 
+you can find the documentation of all possible options here: https://pqina.nl/doka/docs/patterns/api/doka-instance/#properties
+
+```php
+public function fields(Request $request)
+{
+    return [
+        //...
+
+        Filepond::make('Avatar')->withDoka([
+            'cropShowSize' => true
+        ]),
+        
+        /**
+         * This will disable Doka for this specific field
+         */
+        Filepond::make('Simple Image')->withoutDoka(),
+
+    ];
+}
+```
+
+If you did setup everything correctly you should start seeing this edit icon within your existing images
+
+![Laravel Nova Filepond with Doka in action](https://raw.githubusercontent.com/dcasia/nova-filepond/master/screenshots/demo-2.png)
+
 ## License
 
 The MIT License (MIT). Please see [License File](https://raw.githubusercontent.com/dcasia/nova-filepond/master/LICENSE) for more information.
