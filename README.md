@@ -6,7 +6,7 @@
 
 ![Laravel Nova Filepond in action](https://raw.githubusercontent.com/dcasia/nova-filepond/master/screenshots/demo-1.gif)
 
-A Nova field for uploading File, Image and Video using Upload File, Image and Video using [Filepond](https://github.com/pqina/filepond).
+A Nova field for uploading File, Image and Video using [Filepond](https://github.com/pqina/filepond).
 
 # Installation
 
