@@ -2,13 +2,9 @@
 
 namespace DigitalCreative\Filepond;
 
-use Illuminate\Contracts\Debug\ExceptionHandler;
-use Illuminate\Contracts\Http\Kernel as HttpKernel;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\ServiceProvider;
 use Laravel\Nova\Events\ServingNova;
-use Laravel\Nova\Exceptions\NovaExceptionHandler;
-use Laravel\Nova\Http\Middleware\ServeNova;
 use Laravel\Nova\Nova;
 
 class FieldServiceProvider extends ServiceProvider
@@ -26,7 +22,6 @@ class FieldServiceProvider extends ServiceProvider
 
         Nova::serving(function (ServingNova $event) {
             Nova::script('filepond', __DIR__ . '/../dist/js/field.js');
-            Nova::style('filepond', __DIR__ . '/../dist/css/field.css');
         });
     }
 

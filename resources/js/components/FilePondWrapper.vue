@@ -4,7 +4,7 @@
         v-bind="$attrs"
         ref="filepond"
         :style="cssVars"
-        :name="field.attribute"
+        :name="nameField"
         :image-preview-height="field.multiple ? 150 : null"
         label-idle="Drop files here..."
         :allow-multiple="field.multiple"
@@ -36,17 +36,18 @@
         FilePondPluginFileValidateType,
         FilePondPluginImagePreview,
         FilePondPluginImageOverlay,
-        FilePondPluginMediaPreview
+        FilePondPluginMediaPreview,
     )
 
     export default {
         inheritAttrs: false,
         components: {FilePond},
-        props: ['field', 'errors', 'columns', 'limit'   ],
+        props: ['field', 'errors', 'columns', 'limit'],
         data() {
 
             return {
                 files: [...this.field.value],
+                nameField: this.field.attribute,
                 serverOptions: {
                     url: '/nova-vendor/nova-filepond',
                     revert: '/revert',

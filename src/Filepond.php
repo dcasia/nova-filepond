@@ -19,9 +19,45 @@ class Filepond extends Field
      */
     public $component = 'filepond';
 
+    /**
+     * @var callable
+     */
+    public $storeAsCallback;
+
+    /**
+     * @var string
+     */
     private $disk = 'public';
+
+    /**
+     * @var bool
+     */
     private $multiple = false;
+
+    /**
+     * @var null
+     */
     private $directory = null;
+
+    /**
+     * Create a new field.
+     *
+     * @param string $name
+     * @param string|callable|null $attribute
+     * @param callable|null $resolveCallback
+     * @return void
+     */
+    public function __construct($name, $attribute = null, callable $resolveCallback = null)
+    {
+
+        parent::__construct($name, $attribute, $resolveCallback);
+
+        /**
+         * Temporarily as it currently only supports image and it`s not very pretty yet
+         */
+        $this->showOnIndex = false;
+
+    }
 
     public function disable(): self
     {
@@ -76,6 +112,15 @@ class Filepond extends Field
         return $this;
     }
 
+    public function storeAs(callable $callback)
+    {
+
+        $this->storeAsCallback = $callback;
+
+        return $this;
+
+    }
+
     public function updateRules($rules)
     {
 
@@ -123,7 +168,7 @@ class Filepond extends Field
     /**
      * Hydrate the given attribute on the model based on the incoming request.
      *
-     * @param \Laravel\Nova\Http\Requests\NovaRequest $request
+     * @param NovaRequest $request
      * @param string $requestAttribute
      * @param object $model
      * @param string $attribute
@@ -152,6 +197,9 @@ class Filepond extends Field
 
             $serverId = $request->input($requestAttribute);
 
+            /**
+             * If no changes were made the first image should match the given serverId
+             */
             if ($currentImages->first() === $serverId) {
 
                 return;
@@ -161,15 +209,16 @@ class Filepond extends Field
             $this->removeImages($currentImages);
 
             $file = new File(static::getPathFromServerId($serverId));
-            $path = $file->move(Storage::disk($this->disk)->path($this->directory))
-                         ->getBasename();
 
-            $model->setAttribute($attribute, $path);
+            $model->setAttribute($attribute, $this->moveFile($file));
 
             return;
 
         }
 
+        /**
+         * If it`s a multiple files request
+         */
         $files = collect(explode(',', $request->input($requestAttribute)));
 
         $toKeep = $files->intersect($currentImages); // files that exist on the request and on the model
@@ -182,16 +231,21 @@ class Filepond extends Field
 
             $file = new File(static::getPathFromServerId($serverId));
 
-            $toKeep->push(
-
-                $file->move(Storage::disk($this->disk)->path($this->directory))
-                     ->getBasename()
-
-            );
+            $toKeep->push($this->moveFile($file));
 
         }
 
         $model->setAttribute($attribute, $toKeep->values());
+
+    }
+
+    private function moveFile(File $file): string
+    {
+
+        $name = $this->storeAsCallback ? call_user_func($this->storeAsCallback, $file) : null;
+
+        return $file->move(Storage::disk($this->disk)->path($this->directory), $name)
+                    ->getBasename();
 
     }
 
@@ -256,7 +310,7 @@ class Filepond extends Field
      */
     public static function getServerIdFromPath(string $path): string
     {
-        return $path;
+        return encrypt($path);
     }
 
     /**
@@ -268,7 +322,7 @@ class Filepond extends Field
      */
     public static function getPathFromServerId(string $serverId): string
     {
-        return $serverId;
+        return decrypt($serverId);
     }
 
     /**
@@ -283,7 +337,7 @@ class Filepond extends Field
             'multiple' => $this->multiple,
             'disabled' => request()->route()->controller instanceof ResourceShowController,
             'thumbnails' => $this->getThumbnails(),
-            'columns' => $this->multiple ? 2 : 1,
+            'columns' => 1,
             'fullWidth' => false,
             'limit' => null,
             'resourceClass' => '',

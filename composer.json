@@ -1,9 +1,13 @@
 {
     "name": "digital-creative/nova-filepond",
-    "description": "A Laravel Nova field.",
+    "description": "A Nova field for uploading File, Image and Video using filepond.",
     "keywords": [
+        "file",
+        "upload",
+        "video",
         "laravel",
-        "nova"
+        "nova",
+        "field"
     ],
     "authors": [
         {

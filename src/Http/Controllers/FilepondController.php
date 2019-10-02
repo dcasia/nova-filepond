@@ -5,6 +5,7 @@ namespace DigitalCreative\Filepond\Http\Controllers;
 use DigitalCreative\Filepond\Filepond;
 use Illuminate\Foundation\Validation\ValidatesRequests;
 use Illuminate\Http\Request;
+use Illuminate\Http\Response;
 use Illuminate\Routing\Controller as BaseController;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\ValidationException;
@@ -21,7 +22,7 @@ class FilepondController extends BaseController
      *
      * @param Request $request
      *
-     * @return \Illuminate\Http\Response
+     * @return Response
      */
     public function process(Request $request)
     {
@@ -46,8 +47,8 @@ class FilepondController extends BaseController
         }
 
         $tempPath = '/tmp';
-        $filePath = tempnam($tempPath, 'nova-filepond');
-        $filePath .= '.' . $file->extension();
+        $filePath = tempnam($tempPath, 'nova-filepond-');
+        $filePath .= '.' . $file->guessClientExtension();
         $filePathParts = pathinfo($filePath);
         $finalPath = $file->move($filePathParts[ 'dirname' ], $filePathParts[ 'basename' ]);
 
