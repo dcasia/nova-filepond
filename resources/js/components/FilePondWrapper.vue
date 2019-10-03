@@ -12,6 +12,7 @@
         :instant-upload="true"
         :max-files="limit || field.limit"
         :server="serverOptions"
+        :allowImageEdit="field.dokaEnabled"
         :imageEditEditor="editorInstance"
         :imageEditInstantEdit="true"
         imageCropAspectRatio="1:1"
