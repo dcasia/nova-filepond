@@ -288,7 +288,9 @@ class Filepond extends Field
 
         return collect($value)->map(function ($value) {
             return [
-                'source' => $value,
+                'source' => $this->getServerIdFromPath(
+                    trim(rtrim($this->directory, '/') . '/' . $value, '/')
+                ),
                 'options' => [
                     'type' => 'local'
                 ]

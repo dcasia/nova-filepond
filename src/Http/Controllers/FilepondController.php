@@ -92,11 +92,18 @@ class FilepondController extends BaseController
     {
 
         $disk = $request->input('disk');
-        $serverId = $request->input('serverId');
 
+        $serverId = Filepond::getPathFromServerId($request->input('serverId'));
         $filePath = Storage::disk($disk)->path($serverId);
 
-        return response(Storage::disk($disk)->get($serverId))->header('Content-Type', mime_content_type($filePath));
+        $pathInfo = pathinfo($serverId);
+        $filename = $pathInfo[ 'filename' ];
+        $basename = $pathInfo[ 'basename' ];
+
+        return response(Storage::disk($disk)->get($serverId))
+            ->header('Content-Type', mime_content_type($filePath))
+            ->header('Content-Length', filesize($filePath))
+            ->header('Content-Disposition', "inline; name=\"$filename\"; filename=\"$basename\"");
 
     }
 }
