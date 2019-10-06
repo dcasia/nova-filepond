@@ -7,6 +7,7 @@ use Illuminate\Foundation\Validation\ValidatesRequests;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Routing\Controller as BaseController;
+use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\ValidationException;
 use Laravel\Nova\Http\Requests\NovaRequest;
@@ -35,7 +36,7 @@ class FilepondController extends BaseController
             $resourceClass = Nova::resourceForKey($resourceName);
             $rules = $resourceClass::rulesForCreation(app(NovaRequest::class));
 
-            $this->validate($request, $rules);
+            $this->validate($request, Arr::only($rules, $request->input('attribute')));
 
         } catch (ValidationException $exception) {
 
