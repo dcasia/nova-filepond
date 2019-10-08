@@ -120,7 +120,7 @@ class Filepond extends Field
     public function disk(string $disk, string $directory = null)
     {
         $this->disk = $disk;
-        $this->directory = $directory;
+        $this->directory = trim(rtrim($directory, '/'), '/');
 
         return $this;
     }
@@ -208,7 +208,7 @@ class Filepond extends Field
 
         if ($this->multiple === false) {
 
-            $serverId = $request->input($requestAttribute);
+            $serverId = static::getPathFromServerId($request->input($requestAttribute));
 
             /**
              * If no changes were made the first image should match the given serverId
@@ -221,7 +221,7 @@ class Filepond extends Field
 
             $this->removeImages($currentImages);
 
-            $file = new File(static::getPathFromServerId($serverId));
+            $file = new File($serverId);
 
             $model->setAttribute($attribute, $this->moveFile($file));
 
@@ -232,7 +232,9 @@ class Filepond extends Field
         /**
          * If it`s a multiple files request
          */
-        $files = collect(explode(',', $request->input($requestAttribute)));
+        $files = collect(explode(',', $request->input($requestAttribute)))->map(function ($file) {
+            return static::getPathFromServerId($file);
+        });
 
         $toKeep = $files->intersect($currentImages); // files that exist on the request and on the model
         $toAppend = $files->diff($currentImages); // files that exist only on the request
@@ -242,7 +244,7 @@ class Filepond extends Field
 
         foreach ($toAppend as $serverId) {
 
-            $file = new File(static::getPathFromServerId($serverId));
+            $file = new File($serverId);
 
             $toKeep->push($this->moveFile($file));
 
@@ -257,8 +259,7 @@ class Filepond extends Field
 
         $name = $this->storeAsCallback ? call_user_func($this->storeAsCallback, $file) : null;
 
-        return $file->move(Storage::disk($this->disk)->path($this->directory), $name)
-                    ->getBasename();
+        return $this->directory . '/' . $file->move(Storage::disk($this->disk)->path($this->directory), $name)->getBasename();
 
     }
 
@@ -288,9 +289,7 @@ class Filepond extends Field
 
         return collect($value)->map(function ($value) {
             return [
-                'source' => $this->getServerIdFromPath(
-                    trim(rtrim($this->directory, '/') . '/' . $value, '/')
-                ),
+                'source' => $this->getServerIdFromPath($value),
                 'options' => [
                     'type' => 'local'
                 ]
