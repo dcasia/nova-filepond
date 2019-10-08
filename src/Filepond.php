@@ -79,7 +79,7 @@ class Filepond extends Field
         return $this->withMeta([ 'limit' => $amount ]);
     }
 
-    public function mimesTypes(array $mimesTypes): self
+    public function mimesTypes($mimesTypes): self
     {
         return $this->withMeta([ 'mimesTypes' => is_array($mimesTypes) ? $mimesTypes : func_get_args() ]);
     }
