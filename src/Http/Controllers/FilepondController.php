@@ -12,6 +12,7 @@ use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\ValidationException;
 use Laravel\Nova\Http\Requests\NovaRequest;
 use Laravel\Nova\Nova;
+use Symfony\Component\Mime\MimeTypes;
 
 class FilepondController extends BaseController
 {
@@ -94,16 +95,24 @@ class FilepondController extends BaseController
         $disk = $request->input('disk');
 
         $serverId = Filepond::getPathFromServerId($request->input('serverId'));
-        $filePath = Storage::disk($disk)->path($serverId);
 
         $pathInfo = pathinfo($serverId);
         $filename = $pathInfo[ 'filename' ];
         $basename = $pathInfo[ 'basename' ];
+        $extension = $pathInfo[ 'extension' ];
 
-        return response(Storage::disk($disk)->get($serverId))
-            ->header('Content-Type', mime_content_type($filePath))
-            ->header('Content-Length', filesize($filePath))
+        $response = response(Storage::disk($disk)->get($serverId))
             ->header('Content-Disposition', "inline; name=\"$filename\"; filename=\"$basename\"");
+
+        $mimeType = MimeTypes::getDefault()->getMimeTypes($extension)[ 0 ] ?? null;
+
+        if ($mimeType) {
+
+            $response->header('Content-Type', $mimeType);
+
+        }
+
+        return $response;
 
     }
 }

@@ -2,6 +2,7 @@
 
 namespace DigitalCreative\Filepond;
 
+use Exception;
 use Illuminate\Contracts\Validation\Rule;
 use Illuminate\Http\File;
 use Illuminate\Support\Collection;
@@ -120,7 +121,7 @@ class Filepond extends Field
     public function disk(string $disk, string $directory = null)
     {
         $this->disk = $disk;
-        $this->directory = trim(rtrim($directory, '/'), '/');
+        $this->directory = $this->trimSlashes($directory);
 
         return $this;
     }
@@ -187,6 +188,7 @@ class Filepond extends Field
      * @param string $attribute
      *
      * @return mixed
+     * @throws \Exception
      */
     protected function fillAttributeFromRequest(NovaRequest $request, $requestAttribute, $model, $attribute)
     {
@@ -254,12 +256,26 @@ class Filepond extends Field
 
     }
 
+    private function trimSlashes(string $path): string
+    {
+        return trim(rtrim($path, '/'), '/');
+    }
+
     private function moveFile(File $file): string
     {
 
-        $name = $this->storeAsCallback ? call_user_func($this->storeAsCallback, $file) : null;
+        $name = $this->storeAsCallback ? call_user_func($this->storeAsCallback, $file) : $file->getBasename();
+        $fullPath = $this->directory . '/' . $this->trimSlashes($name);
 
-        return $this->directory . '/' . $file->move(Storage::disk($this->disk)->path($this->directory), $name)->getBasename();
+        $response = Storage::disk($this->disk)->put($fullPath, file_get_contents($file->getRealPath()));
+
+        if ($response) {
+
+            return $this->trimSlashes($fullPath);
+
+        }
+
+        throw new Exception('Failed to upload file.');
 
     }
 
@@ -309,7 +325,7 @@ class Filepond extends Field
 
         return $this->value->map(function ($value) {
 
-            return Storage::disk($this->disk)->url($value[ 'source' ]);
+            return Storage::disk($this->disk)->url(self::getPathFromServerId($value[ 'source' ]));
 
         });
 
