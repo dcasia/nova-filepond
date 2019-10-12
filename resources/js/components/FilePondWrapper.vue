@@ -1,23 +1,22 @@
 <template>
 
     <file-pond
-        v-bind="$attrs"
-        ref="filepond"
-        :style="cssVars"
-        :name="nameField"
-        :image-preview-height="field.multiple ? 150 : null"
-        label-idle="Drop files here..."
-        :allow-multiple="field.multiple"
-        :accepted-file-types="field.mimesTypes"
-        :instant-upload="true"
-        :max-files="limit || field.limit"
-        :server="serverOptions"
-        :allowImageEdit="field.dokaEnabled"
-        :imageEditEditor="editorInstance"
-        :imageEditInstantEdit="true"
-        imageCropAspectRatio="1:1"
-        :disabled="field.disabled"
-        :files="files"/>
+            v-bind="$attrs"
+            ref="filepond"
+            :style="cssVars"
+            :name="nameField"
+            :image-preview-height="field.multiple ? 150 : null"
+            label-idle="Drop files here..."
+            :allow-multiple="field.multiple"
+            :accepted-file-types="field.mimesTypes"
+            :instant-upload="true"
+            :max-files="limit || field.limit"
+            :server="serverOptions"
+            :allow-image-edit="field.dokaEnabled"
+            :image-edit-editor="editorInstance"
+            :image-edit-instant-edit="true"
+            :disabled="field.disabled"
+            :files="files"/>
 
 </template>
 
