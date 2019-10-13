@@ -10,6 +10,7 @@ use Illuminate\Support\Facades\Storage;
 use Laravel\Nova\Fields\Field;
 use Laravel\Nova\Http\Controllers\ResourceShowController;
 use Laravel\Nova\Http\Requests\NovaRequest;
+use Symfony\Component\Mime\MimeTypes;
 
 class Filepond extends Field
 {
@@ -46,6 +47,7 @@ class Filepond extends Field
      * @param string $name
      * @param string|callable|null $attribute
      * @param callable|null $resolveCallback
+     *
      * @return void
      */
     public function __construct($name, $attribute = null, callable $resolveCallback = null)
@@ -82,7 +84,21 @@ class Filepond extends Field
 
     public function mimesTypes($mimesTypes): self
     {
-        return $this->withMeta([ 'mimesTypes' => is_array($mimesTypes) ? $mimesTypes : func_get_args() ]);
+        $mimesTypes = is_array($mimesTypes) ? $mimesTypes : func_get_args();
+
+        return $this->withMeta(
+            [ 'mimesTypes' => array_merge($this->meta[ 'mimesTypes' ] ?? [], $mimesTypes) ]
+        );
+    }
+
+    public function maxHeight(string $heightWithUnit): self
+    {
+        return $this->withMeta([ 'maxHeight' => $heightWithUnit ]);
+    }
+
+    public static function guessMimeType(string $extension): ?string
+    {
+        return MimeTypes::getDefault()->getMimeTypes($extension)[ 0 ] ?? null;
     }
 
     public function single(): self
@@ -99,6 +115,21 @@ class Filepond extends Field
         return $this;
     }
 
+    public function image(): self
+    {
+        return $this->mimesTypes('image/jpeg', 'image/png', 'image/svg+xml');
+    }
+
+    public function video(): self
+    {
+        return $this->mimesTypes('video/mp4', 'video/webm', 'video/ogg');
+    }
+
+    public function audio(): self
+    {
+        return $this->mimesTypes('audio/wav', 'audio/mp3', 'audio/ogg', 'audio/webm');
+    }
+
     public function withDoka(array $options = []): self
     {
         return $this->withMeta([
@@ -107,6 +138,11 @@ class Filepond extends Field
         ]);
     }
 
+    /**
+     * Disable Doka, you dont need to call this method if you haven't globally enabled it from the config file
+     *
+     * @return $this
+     */
     public function withoutDoka(): self
     {
         return $this->withMeta([ 'dokaEnabled' => false ]);
@@ -275,7 +311,7 @@ class Filepond extends Field
 
         }
 
-        throw new Exception('Failed to upload file.');
+        throw new Exception(__('Failed to upload file.'));
 
     }
 
@@ -369,8 +405,8 @@ class Filepond extends Field
             'thumbnails' => $this->getThumbnails(),
             'columns' => 1,
             'fullWidth' => false,
+            'maxHeight' => 'auto',
             'limit' => null,
-            'resourceClass' => '',
             'dokaOptions' => config('nova-filepond.doka.options'),
             'dokaEnabled' => config('nova-filepond.doka.enabled'),
         ], $this->meta(), parent::jsonSerialize());

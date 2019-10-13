@@ -49,6 +49,7 @@
                         return file.status === 2 || file.status === 5
                     })
                     .map(file => file.serverId)
+                    .join(',')
 
             },
 

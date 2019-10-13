@@ -6,7 +6,7 @@
             :style="cssVars"
             :name="nameField"
             :image-preview-height="field.multiple ? 150 : null"
-            label-idle="Drop files here..."
+            :label-idle="__('Drop files here...')"
             :allow-multiple="field.multiple"
             :accepted-file-types="field.mimesTypes"
             :instant-upload="true"
@@ -112,7 +112,8 @@
             },
             cssVars() {
                 return {
-                    '--filepond-column': (100 / (this.columns || this.field.columns)) + '%'
+                    '--filepond-column': (100 / (this.columns || this.field.columns)) + '%',
+                    '--filepond-max-height': this.field.maxHeight
                 }
             }
         }
@@ -122,11 +123,13 @@
 <style>
 
     :root {
-        --filepond-column: 100%
+        --filepond-column: 100%;
+        --filepond-max-height: auto;
     }
 
     .filepond--root {
         transition: all 250ms;
+        max-height: var(--filepond-max-height);
     }
 
     .filepond--fullsize-overlay {

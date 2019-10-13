@@ -102,11 +102,10 @@ class FilepondController extends BaseController
         $extension = $pathInfo[ 'extension' ];
 
         $response = response(Storage::disk($disk)->get($serverId))
-            ->header('Content-Disposition', "inline; name=\"$filename\"; filename=\"$basename\"");
+            ->header('Content-Disposition', "inline; name=\"$filename\"; filename=\"$basename\"")
+            ->header('Content-Length', Storage::disk($disk)->size($serverId));
 
-        $mimeType = MimeTypes::getDefault()->getMimeTypes($extension)[ 0 ] ?? null;
-
-        if ($mimeType) {
+        if ($mimeType = Filepond::guessMimeType($extension)) {
 
             $response->header('Content-Type', $mimeType);
 
