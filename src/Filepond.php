@@ -157,7 +157,7 @@ class Filepond extends Field
     public function disk(string $disk, string $directory = null)
     {
         $this->disk = $disk;
-        $this->directory = $this->trimSlashes($directory);
+        $this->directory = $directory;
 
         return $this;
     }
@@ -301,7 +301,7 @@ class Filepond extends Field
     {
 
         $name = $this->storeAsCallback ? call_user_func($this->storeAsCallback, $file) : $file->getBasename();
-        $fullPath = $this->directory . '/' . $this->trimSlashes($name);
+        $fullPath = $this->trimSlashes($this->directory ?? '') . '/' . $this->trimSlashes($name);
 
         $response = Storage::disk($this->disk)->put($fullPath, file_get_contents($file->getRealPath()));
 
