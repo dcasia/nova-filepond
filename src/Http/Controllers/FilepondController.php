@@ -2,6 +2,7 @@
 
 namespace DigitalCreative\Filepond\Http\Controllers;
 
+use App\Nova\Resource;
 use DigitalCreative\Filepond\Filepond;
 use Illuminate\Foundation\Validation\ValidatesRequests;
 use Illuminate\Http\Request;
@@ -12,7 +13,6 @@ use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\ValidationException;
 use Laravel\Nova\Http\Requests\NovaRequest;
 use Laravel\Nova\Nova;
-use Symfony\Component\Mime\MimeTypes;
 
 class FilepondController extends BaseController
 {
@@ -22,22 +22,34 @@ class FilepondController extends BaseController
      * Uploads the file to the temporary directory
      * and returns an encrypted path to the file
      *
-     * @param Request $request
+     * @param NovaRequest $request
      *
      * @return Response
      */
-    public function process(Request $request)
+    public function process(NovaRequest $request)
     {
 
-        $file = $request->file($request->input('attribute'));
+        $attribute = $request->input('attribute');
+        $prefixedAttribute = '__' . $attribute;
+        $file = $request->file($prefixedAttribute);
         $resourceName = $request->input('resourceName');
+
+        $request->offsetSet($attribute, $file);
 
         try {
 
             $resourceClass = Nova::resourceForKey($resourceName);
-            $rules = $resourceClass::rulesForCreation(app(NovaRequest::class));
 
-            $this->validate($request, Arr::only($rules, $request->input('attribute')));
+            /**
+             * @var Resource $resource
+             */
+            $resource = (new $resourceClass($resourceClass::newModel()));
+            $rules = $resource->creationFields($request)
+                              ->whereInstanceOf(Filepond::class)
+                              ->firstWhere('name', $attribute)
+                              ->getCreationRules($request);
+
+            $this->validate($request, Arr::only($rules, $attribute));
 
         } catch (ValidationException $exception) {
 

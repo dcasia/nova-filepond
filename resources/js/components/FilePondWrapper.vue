@@ -83,7 +83,7 @@
             return {
                 editorInstance: editorInstance,
                 files: [...this.field.value],
-                nameField: this.field.attribute,
+                nameField: `__${this.field.attribute}`,
                 serverOptions: {
                     url: '/nova-vendor/nova-filepond',
                     revert: '/revert',

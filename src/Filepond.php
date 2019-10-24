@@ -224,7 +224,7 @@ class Filepond extends Field
      * @param string $attribute
      *
      * @return mixed
-     * @throws \Exception
+     * @throws Exception
      */
     protected function fillAttributeFromRequest(NovaRequest $request, $requestAttribute, $model, $attribute)
     {
