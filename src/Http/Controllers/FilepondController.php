@@ -2,7 +2,6 @@
 
 namespace DigitalCreative\Filepond\Http\Controllers;
 
-use App\Nova\Resource;
 use DigitalCreative\Filepond\Filepond;
 use Illuminate\Foundation\Validation\ValidatesRequests;
 use Illuminate\Http\Request;
@@ -13,6 +12,7 @@ use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\ValidationException;
 use Laravel\Nova\Http\Requests\NovaRequest;
 use Laravel\Nova\Nova;
+use Laravel\Nova\Resource;
 
 class FilepondController extends BaseController
 {
