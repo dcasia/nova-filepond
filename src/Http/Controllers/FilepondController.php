@@ -46,7 +46,7 @@ class FilepondController extends BaseController
             $resource = (new $resourceClass($resourceClass::newModel()));
             $rules = $resource->creationFields($request)
                               ->whereInstanceOf(Filepond::class)
-                              ->firstWhere('name', $attribute)
+                              ->firstWhere('attribute', $attribute)
                               ->getCreationRules($request);
 
             $this->validate($request, Arr::only($rules, $attribute));
