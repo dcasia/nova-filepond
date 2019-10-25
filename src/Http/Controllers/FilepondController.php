@@ -10,6 +10,8 @@ use Illuminate\Routing\Controller as BaseController;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\ValidationException;
+use Laravel\Nova\Contracts\RelatableField;
+use Laravel\Nova\Fields\BelongsTo;
 use Laravel\Nova\Http\Requests\NovaRequest;
 use Laravel\Nova\Nova;
 use Laravel\Nova\Resource;
@@ -43,11 +45,7 @@ class FilepondController extends BaseController
             /**
              * @var Resource $resource
              */
-            $resource = (new $resourceClass($resourceClass::newModel()));
-            $rules = $resource->creationFields($request)
-                              ->whereInstanceOf(Filepond::class)
-                              ->firstWhere('attribute', $attribute)
-                              ->getCreationRules($request);
+            $rules = $this->getCreationRules($resourceClass, $request);
 
             $this->validate($request, Arr::only($rules, $attribute));
 
@@ -126,4 +124,17 @@ class FilepondController extends BaseController
         return $response;
 
     }
+
+    private function getCreationRules(string $resource, NovaRequest $request): array
+    {
+        return (new $resource($resource::newModel()))
+            ->creationFields($request)
+            ->reject(function ($field) use ($request) {
+                return $field->isReadonly($request) || $field instanceof RelatableField;
+            })
+            ->mapWithKeys(function ($field) use ($request) {
+                return $field->getCreationRules($request);
+            })->all();
+    }
+
 }
