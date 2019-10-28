@@ -16,6 +16,7 @@
             :image-edit-editor="editorInstance"
             :image-edit-instant-edit="true"
             :disabled="field.disabled"
+            :allow-paste="false"
             :files="files"/>
 
 </template>
