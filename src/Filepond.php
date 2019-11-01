@@ -353,7 +353,7 @@ class Filepond extends Field
     private function getThumbnails(): Collection
     {
 
-        if ($this->value->isEmpty()) {
+        if (blank($this->value)) {
 
             return collect();
 
