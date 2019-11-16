@@ -7,6 +7,7 @@ use Illuminate\Contracts\Validation\Rule;
 use Illuminate\Http\File;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 use Laravel\Nova\Fields\Field;
 use Laravel\Nova\Http\Controllers\ResourceShowController;
 use Laravel\Nova\Http\Requests\NovaRequest;
@@ -136,6 +137,11 @@ class Filepond extends Field
             'dokaEnabled' => true,
             'dokaOptions' => array_merge(config('nova-filepond.doka.options', []), $options)
         ]);
+    }
+
+    public function labels(array $labels): self
+    {
+        return $this->withMeta([ 'labels' => $labels ]);
     }
 
     /**
@@ -391,6 +397,19 @@ class Filepond extends Field
         return decrypt($serverId);
     }
 
+    private function getLabels(): Collection
+    {
+
+        $labels = collect(config('nova-filepond.labels', []))
+            ->merge($this->meta[ 'labels' ] ?? [])
+            ->mapWithKeys(function ($label, $key) {
+                return [ "label" . Str::title($key) => trans($label) ];
+            });
+
+        return $labels;
+
+    }
+
     /**
      * Prepare the field for JSON serialization.
      *
@@ -409,6 +428,7 @@ class Filepond extends Field
             'limit' => null,
             'dokaOptions' => config('nova-filepond.doka.options'),
             'dokaEnabled' => config('nova-filepond.doka.enabled'),
+            'labels' => $this->getLabels(),
         ], $this->meta(), parent::jsonSerialize());
     }
 

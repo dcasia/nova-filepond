@@ -1,12 +1,11 @@
 <template>
 
     <file-pond
-            v-bind="$attrs"
+            v-bind="{ ...$attrs, ...field.labels }"
             ref="filepond"
             :style="cssVars"
             :name="nameField"
             :image-preview-height="field.multiple ? 150 : null"
-            :label-idle="__('Drop files here...')"
             :allow-multiple="field.multiple"
             :accepted-file-types="field.mimesTypes"
             :instant-upload="true"
