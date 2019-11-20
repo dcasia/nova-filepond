@@ -28,6 +28,11 @@ class Filepond extends Field
     public $storeAsCallback;
 
     /**
+     * @var bool
+     */
+    private $keepOriginalFilename = false;
+
+    /**
      * @var string
      */
     private $disk = 'public';
@@ -177,6 +182,12 @@ class Filepond extends Field
 
     }
 
+    public function keepOriginalFilename(bool $value = true)
+    {
+        $this->keepOriginalFilename = $value;
+        return $this;
+    }
+
     public function updateRules($rules)
     {
 
@@ -305,13 +316,25 @@ class Filepond extends Field
 
     private function moveFile(File $file): string
     {
+        $metaPath = "{$file}_meta.json";
+        if (file_exists($metaPath)) {
+            $meta = json_decode(file_get_contents($metaPath));
+            unlink($metaPath);
+            if ($this->keepOriginalFilename && $meta->clientOriginalName) {
+                $pathInfo = pathinfo($file->getRealPath());
+                $file = $file->move('/tmp', $meta->clientOriginalName);
+                $file = new File($file->getRealPath());
+            }
+        }
 
         $name = $this->storeAsCallback ? call_user_func($this->storeAsCallback, $file) : $file->getBasename();
+
         $fullPath = $this->trimSlashes($this->directory ?? '') . '/' . $this->trimSlashes($name);
 
         $response = Storage::disk($this->disk)->put($fullPath, file_get_contents($file->getRealPath()));
 
         if ($response) {
+            unlink($file);
 
             return $this->trimSlashes($fullPath);
 
