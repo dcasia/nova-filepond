@@ -319,7 +319,6 @@ class Filepond extends Field
         $metaPath = "{$file}_meta.json";
         if (file_exists($metaPath)) {
             $meta = json_decode(file_get_contents($metaPath));
-            unlink($metaPath);
             if ($this->keepOriginalFilename && $meta->clientOriginalName) {
                 $pathInfo = pathinfo($file->getRealPath());
                 $file = $file->move('/tmp', $meta->clientOriginalName);
@@ -335,6 +334,7 @@ class Filepond extends Field
 
         if ($response) {
             unlink($file);
+            unlink($metaPath);
 
             return $this->trimSlashes($fullPath);
 
