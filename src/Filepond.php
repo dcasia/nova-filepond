@@ -320,8 +320,12 @@ class Filepond extends Field
         if (file_exists($metaPath)) {
             $meta = json_decode(file_get_contents($metaPath));
             if ($this->keepOriginalFilename && $meta->clientOriginalName) {
-                $pathInfo = pathinfo($file->getRealPath());
-                $file = $file->move('/tmp', $meta->clientOriginalName);
+                $pathInfo = pathinfo($meta->clientOriginalName);
+                $suffix = '';
+                if (Storage::disk($this->disk)->exists($this->trimSlashes($this->directory ?? '') . '/' . $pathInfo['basename']) && !$this->storeAsCallback) {
+                    $suffix = '-' . mt_rand();
+                }
+                $file = $file->move('/tmp', "{$pathInfo['filename']}{$suffix}.{$pathInfo['extension']}");
                 $file = new File($file->getRealPath());
             }
         }
