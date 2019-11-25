@@ -36,6 +36,7 @@ class Post extends Resource
                     ->storeAs(function (Illuminate\Http\File $file) { // this is optional, use in case you need generate custom file names
                         return Str::random(20) . '.' . $file->getExtension();
                     })
+                    ->keepOriginalFilename() // optional. Makes the file retain it's original filename. Filename can still be modified in storeAs()
 
         ];
 

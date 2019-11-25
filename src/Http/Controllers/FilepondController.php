@@ -8,6 +8,7 @@ use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Routing\Controller as BaseController;
 use Illuminate\Support\Arr;
+use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\ValidationException;
 use Laravel\Nova\Contracts\RelatableField;
@@ -60,9 +61,15 @@ class FilepondController extends BaseController
 
         $tempPath = '/tmp';
         $filePath = tempnam($tempPath, 'nova-filepond-');
-        $filePath .= '.' . $file->guessClientExtension();
-        $filePathParts = pathinfo($filePath);
-        $finalPath = $file->move($filePathParts[ 'dirname' ], $filePathParts[ 'basename' ]);
+        unlink($filePath);
+        $uploadPath = "{$filePath}.{$file->guessClientExtension()}";
+        $uploadPathParts = pathinfo($uploadPath);
+        $finalPath = $file->move($uploadPathParts['dirname'], $uploadPathParts['basename']);
+
+        $metaPath = "{$uploadPath}_meta.json";
+        File::put($metaPath, json_encode([
+            'clientOriginalName' => $file->getClientOriginalName(),
+        ]));
 
         if (!$finalPath) {
 
@@ -89,7 +96,7 @@ class FilepondController extends BaseController
 
         $filePath = Filepond::getPathFromServerId($request->getContent());
 
-        if (unlink($filePath)) {
+        if (unlink($filePath) && unlink("{$filePath}_meta.json")) {
 
             return response()->make();
 
