@@ -18,137 +18,137 @@ use Laravel\Nova\Resource;
 
 class FilepondController extends BaseController
 {
-    use ValidatesRequests;
+	use ValidatesRequests;
 
-    /**
-     * Uploads the file to the temporary directory
-     * and returns an encrypted path to the file
-     *
-     * @param NovaRequest $request
-     *
-     * @return Response
-     */
-    public function process(NovaRequest $request)
-    {
+	/**
+	 * Uploads the file to the temporary directory
+	 * and returns an encrypted path to the file
+	 *
+	 * @param NovaRequest $request
+	 *
+	 * @return Response
+	 */
+	public function process(NovaRequest $request)
+	{
 
-        $attribute = $request->input('attribute');
-        $prefixedAttribute = '__' . $attribute;
-        $file = $request->file($prefixedAttribute);
-        $resourceName = $request->input('resourceName');
+		$attribute = $request->input('attribute');
+		$prefixedAttribute = '__' . $attribute;
+		$file = $request->file($prefixedAttribute);
+		$resourceName = $request->input('resourceName');
 
-        $request->offsetSet($attribute, $file);
+		$request->offsetSet($attribute, $file);
 
-        try {
+		try {
 
-            $resourceClass = Nova::resourceForKey($resourceName);
+			$resourceClass = Nova::resourceForKey($resourceName);
 
-            /**
-             * @var Resource $resource
-             */
-            $rules = $this->getCreationRules($resourceClass, $request);
+			/**
+			 * @var Resource $resource
+			 */
+			$rules = $this->getCreationRules($resourceClass, $request);
 
-            $this->validate($request, Arr::only($rules, $attribute));
+			$this->validate($request, Arr::only($rules, $attribute));
 
-        } catch (ValidationException $exception) {
+		} catch(ValidationException $exception) {
 
-            return response()->json([
-                'message' => $exception->getMessage(),
-                'errors' => $exception->errors(),
-            ], $exception->status);
+			return response()->json([
+				'message' => $exception->getMessage(),
+				'errors'  => $exception->errors(),
+			], $exception->status);
 
-        }
+		}
 
-        $tempPath = storage_path('/tmp');
+		$tempPath = storage_path('/tmp');
 
-        if(!file_exists($tempPath)) {
-        	mkdir($tempPath);
-        }
+		if(!file_exists($tempPath)) {
+			mkdir($tempPath);
+		}
 
-        $filePath = tempnam($tempPath, 'nova-filepond-');
-        $filePath .= '.' . $file->guessClientExtension();
-        $filePathParts = pathinfo($filePath);
-        $finalPath = $file->move($filePathParts[ 'dirname' ], $filePathParts[ 'basename' ]);
+		$filePath = tempnam($tempPath, 'nova-filepond-');
+		$filePath .= '.' . $file->guessClientExtension();
+		$filePathParts = pathinfo($filePath);
+		$finalPath = $file->move($filePathParts['dirname'], $filePathParts['basename']);
 
-        if (!$finalPath) {
+		if(!$finalPath) {
 
-            return response()->make('Could not save file', 500);
+			return response()->make('Could not save file', 500);
 
-        }
+		}
 
-        return response()->make(
-            Filepond::getServerIdFromPath($finalPath->getRealPath())
-        );
+		return response()->make(
+			Filepond::getServerIdFromPath($finalPath->getRealPath())
+		);
 
-    }
+	}
 
-    /**
-     * Takes the given encrypted filepath and deletes
-     * it if it hasn't been tampered with
-     *
-     * @param Request $request
-     *
-     * @return mixed
-     */
-    public function revert(Request $request)
-    {
+	/**
+	 * Takes the given encrypted filepath and deletes
+	 * it if it hasn't been tampered with
+	 *
+	 * @param Request $request
+	 *
+	 * @return mixed
+	 */
+	public function revert(Request $request)
+	{
 
-        $filePath = Filepond::getPathFromServerId($request->getContent());
+		$filePath = Filepond::getPathFromServerId($request->getContent());
 
-        if (unlink($filePath)) {
+		if(unlink($filePath)) {
 
-            return response()->make();
+			return response()->make();
 
-        }
+		}
 
-        return response()->setStatusCode(500);
+		return response()->setStatusCode(500);
 
-    }
+	}
 
-    public function load(Request $request)
-    {
+	public function load(Request $request)
+	{
 
-        $disk = $request->input('disk');
+		$disk = $request->input('disk');
 
-        $serverId = Filepond::getPathFromServerId($request->input('serverId'));
+		$serverId = Filepond::getPathFromServerId($request->input('serverId'));
 
-        $pathInfo = pathinfo($serverId);
-        $filename = $pathInfo[ 'filename' ];
-        $basename = $pathInfo[ 'basename' ];
-        $extension = $pathInfo[ 'extension' ];
+		$pathInfo = pathinfo($serverId);
+		$filename = $pathInfo['filename'];
+		$basename = $pathInfo['basename'];
+		$extension = $pathInfo['extension'];
 
-        $response = response(Storage::disk($disk)->get($serverId))
-            ->header('Content-Disposition', "inline; name=\"$filename\"; filename=\"$basename\"")
-            ->header('Content-Length', Storage::disk($disk)->size($serverId));
+		$response = response(Storage::disk($disk)->get($serverId))
+			->header('Content-Disposition', "inline; name=\"$filename\"; filename=\"$basename\"")
+			->header('Content-Length', Storage::disk($disk)->size($serverId));
 
-        if ($mimeType = Filepond::guessMimeType($extension)) {
+		if($mimeType = Filepond::guessMimeType($extension)) {
 
-            $response->header('Content-Type', $mimeType);
+			$response->header('Content-Type', $mimeType);
 
-        }
+		}
 
-        return $response;
+		return $response;
 
-    }
+	}
 
-    private function getCreationRules(string $resource, NovaRequest $request): array
-    {
-	    /** @var FieldCollection $creatingFields */
-	    $creatingFields = (new $resource($resource::newModel()))
-            ->creationFields($request);
+	private function getCreationRules(string $resource, NovaRequest $request): array
+	{
+		/** @var FieldCollection $creatingFields */
+		$creatingFields = ( new $resource($resource::newModel()) )
+			->creationFields($request);
 
-        if(isset($creatingFields['Tabs']) && isset($creatingFields['Tabs']['fields'])) {
-	        $creatingFields = $creatingFields['Tabs']['fields'];
-        } else {
-        	throw new \Exception('Error Getting Fields');
-        }
+		if(isset($creatingFields['Tabs']) && isset($creatingFields['Tabs']['fields'])) {
+			$creatingFields = $creatingFields['Tabs']['fields'];
+		} else {
+			throw new \Exception('Error Getting Fields');
+		}
 
-        return $creatingFields->reject(function ($field) use ($request) {
-                return $field->isReadonly($request) || $field instanceof RelatableField;
-            })
-            ->mapWithKeys(function ($field) use ($request) {
-                return $field->getCreationRules($request);
-            })
-            ->all();
-    }
+		return $creatingFields->reject(function($field) use ($request) {
+			return $field->isReadonly($request) || $field instanceof RelatableField;
+		})
+		                      ->mapWithKeys(function($field) use ($request) {
+			                      return $field->getCreationRules($request);
+		                      })
+		                      ->all();
+	}
 
 }
