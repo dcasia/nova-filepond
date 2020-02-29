@@ -58,7 +58,12 @@ class FilepondController extends BaseController
 
         }
 
-        $tempPath = '/tmp';
+        $tempPath = storage_path('/tmp');
+
+        if(!file_exists($tempPath)) {
+        	mkdir($tempPath);
+        }
+
         $filePath = tempnam($tempPath, 'nova-filepond-');
         $filePath .= '.' . $file->guessClientExtension();
         $filePathParts = pathinfo($filePath);
@@ -127,14 +132,23 @@ class FilepondController extends BaseController
 
     private function getCreationRules(string $resource, NovaRequest $request): array
     {
-        return (new $resource($resource::newModel()))
-            ->creationFields($request)
-            ->reject(function ($field) use ($request) {
+	    /** @var FieldCollection $creatingFields */
+	    $creatingFields = (new $resource($resource::newModel()))
+            ->creationFields($request);
+
+        if(isset($creatingFields['Tabs']) && isset($creatingFields['Tabs']['fields'])) {
+	        $creatingFields = $creatingFields['Tabs']['fields'];
+        } else {
+        	throw new \Exception('Error Getting Fields');
+        }
+
+        return $creatingFields->reject(function ($field) use ($request) {
                 return $field->isReadonly($request) || $field instanceof RelatableField;
             })
             ->mapWithKeys(function ($field) use ($request) {
                 return $field->getCreationRules($request);
-            })->all();
+            })
+            ->all();
     }
 
 }

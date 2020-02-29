@@ -8,6 +8,7 @@
                 :ref="`${field.attribute}Filepond`"
                 :field="field"
                 :errors="errors"
+                :resource="{name: this.resourceName, id: this.resourceId}"
                 :onprocessfile="updateFiles"
                 :onremovefile="updateFiles"/>
 

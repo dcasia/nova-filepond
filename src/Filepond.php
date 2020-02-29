@@ -12,6 +12,7 @@ use Laravel\Nova\Fields\Field;
 use Laravel\Nova\Http\Controllers\ResourceShowController;
 use Laravel\Nova\Http\Requests\NovaRequest;
 use Symfony\Component\Mime\MimeTypes;
+use Illuminate\Support\Arr;
 
 class Filepond extends Field
 {
@@ -165,7 +166,10 @@ class Filepond extends Field
         $this->disk = $disk;
         $this->directory = $directory;
 
-        return $this;
+        return $this->withMeta([
+        	'disk' => $this->disk,
+	        'directory' => $this->directory,
+        ]);
     }
 
     public function storeAs(callable $callback)
@@ -235,7 +239,7 @@ class Filepond extends Field
     protected function fillAttributeFromRequest(NovaRequest $request, $requestAttribute, $model, $attribute)
     {
 
-        $currentImages = collect($model->{$requestAttribute});
+        $currentImages = collect($this->getModelValue($model, $requestAttribute));
 
         /**
          * null when all images are removed
@@ -279,13 +283,13 @@ class Filepond extends Field
         $files = collect(explode(',', $request->input($requestAttribute)))->map(function ($file) {
             return static::getPathFromServerId($file);
         });
-
+dump($files, $currentImages, $requestAttribute);
         $toKeep = $files->intersect($currentImages); // files that exist on the request and on the model
         $toAppend = $files->diff($currentImages); // files that exist only on the request
         $toDelete = $currentImages->diff($files); // files that doest exist on the request but exist on the model
 
         $this->removeImages($toDelete);
-
+dump($toAppend);
         foreach ($toAppend as $serverId) {
 
             $file = new File($serverId);
@@ -430,6 +434,22 @@ class Filepond extends Field
             'dokaEnabled' => config('nova-filepond.doka.enabled'),
             'labels' => $this->getLabels(),
         ], $this->meta(), parent::jsonSerialize());
+    }
+
+	public function getModelValue($model, $attribute)
+	{
+		if(Str::contains($attribute, '->')) {
+			$levels = explode("->", $attribute);
+			$value = $model;
+
+			foreach($levels as $level) {
+				$value = $value[$level];
+			}
+
+			return $value;
+		}
+
+		return $model->{$attribute};
     }
 
 }

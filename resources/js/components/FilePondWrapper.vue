@@ -55,7 +55,7 @@
     export default {
         inheritAttrs: false,
         components: {FilePond},
-        props: ['field', 'errors', 'columns', 'limit'],
+        props: ['field', 'errors', 'columns', 'limit', 'resource'],
         data() {
 
             let editorInstance = null
@@ -89,7 +89,7 @@
                     revert: '/revert',
                     load: `/load/?disk=${this.field.disk}&serverId=`,
                     process: {
-                        url: '/process',
+                        url: `/process/${this.resource.name}/${this.resource.id}`,
                         ondata: formData => {
                             formData.append('attribute', this.field.attribute)
                             formData.append('resourceName', this.$route.params.resourceName)
@@ -100,7 +100,8 @@
                         }
                     },
                     headers: {
-                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+                        'X-Requested-With': 'XMLHttpRequest',
                     }
                 }
             }
