@@ -31,13 +31,11 @@
         props: ['resourceName', 'resourceId', 'field'],
 
         computed: {
-
             filepondInstance() {
 
                 return this.$refs[`${this.field.attribute}Filepond`].instance
 
             }
-
         },
 
         methods: {

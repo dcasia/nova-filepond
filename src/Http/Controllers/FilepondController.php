@@ -36,7 +36,6 @@ class FilepondController extends BaseController
 		$prefixedAttribute = '__' . $attribute;
 		$file = $request->file($prefixedAttribute);
 		$resourceName = $request->input('resourceName');
-
 		$request->offsetSet($attribute, $file);
 
 		try {
@@ -112,9 +111,7 @@ class FilepondController extends BaseController
 			->header('Content-Length', Storage::disk($disk)->size($serverId));
 
 		if($mimeType = Filepond::guessMimeType($extension)) {
-
 			$response->header('Content-Type', $mimeType);
-
 		}
 
 		return $response;
