@@ -15,5 +15,6 @@ use Illuminate\Support\Facades\Route;
 */
 
 Route::post('/process/{resource}/{resourceId}', [ FilepondController::class, 'process' ])->name('nova.filepond.process');
+Route::get('/download/{resource}/{resourceId}/{file}/{field}', [ FilepondController::class, 'download' ])->name('nova.filepond.process');
 Route::delete('/revert', [ FilepondController::class, 'revert' ])->name('nova.filepond.revert');
 Route::get('/load', [ FilepondController::class, 'load' ])->name('nova.filepond.load');

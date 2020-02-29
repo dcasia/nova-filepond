@@ -1073,16 +1073,6 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 //
 //
 //
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
 
 /* harmony default export */ __webpack_exports__["default"] = ({
     props: ['resourceName', 'field']
@@ -1096,26 +1086,11 @@ var render = function() {
   var _vm = this
   var _h = _vm.$createElement
   var _c = _vm._self._c || _h
-  return _c(
-    "p",
-    [
-      _vm._l(_vm.field.thumbnails, function(url, index) {
-        return _c("img", {
-          key: index,
-          staticClass: "align-bottom w-8 h-8",
-          class: {
-            "rounded-full": _vm.field.rounded,
-            rounded: !_vm.field.rounded
-          },
-          staticStyle: { "object-fit": "cover" },
-          attrs: { src: url }
-        })
-      }),
-      _vm._v(" "),
-      !_vm.field.thumbnails.length ? _c("span", [_vm._v("—")]) : _vm._e()
-    ],
-    2
-  )
+  return _c("p", [
+    !_vm.field.thumbnails.length
+      ? _c("span", [_vm._v("—")])
+      : _c("span", [_vm._v(_vm._s(_vm.field.thumbnails.length))])
+  ])
 }
 var staticRenderFns = []
 render._withStripped = true
@@ -1132,17 +1107,21 @@ if (false) {
 /***/ (function(module, exports, __webpack_require__) {
 
 var disposed = false
+function injectStyle (ssrContext) {
+  if (disposed) return
+  __webpack_require__(54)
+}
 var normalizeComponent = __webpack_require__(2)
 /* script */
 var __vue_script__ = __webpack_require__(15)
 /* template */
-var __vue_template__ = __webpack_require__(47)
+var __vue_template__ = __webpack_require__(56)
 /* template functional */
 var __vue_template_functional__ = false
 /* styles */
-var __vue_styles__ = null
+var __vue_styles__ = injectStyle
 /* scopeId */
-var __vue_scopeId__ = null
+var __vue_scopeId__ = "data-v-0224618e"
 /* moduleIdentifier (server only) */
 var __vue_module_identifier__ = null
 var Component = normalizeComponent(
@@ -1180,8 +1159,6 @@ module.exports = Component.exports
 
 "use strict";
 Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__FilePondWrapper__ = __webpack_require__(5);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__FilePondWrapper___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_0__FilePondWrapper__);
 //
 //
 //
@@ -1197,13 +1174,26 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 //
 //
 //
-
-
-
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
 
 /* harmony default export */ __webpack_exports__["default"] = ({
-    components: { FilePondWrapper: __WEBPACK_IMPORTED_MODULE_0__FilePondWrapper___default.a },
-    props: ['resource', 'resourceName', 'resourceId', 'field']
+    props: ['resource', 'resourceName', 'resourceId', 'field'],
+
+    methods: {
+        downloadPath: function downloadPath(file) {
+            return '/nova-vendor/nova-filepond/download/' + this.resourceName + '/' + this.resourceId + '/' + file + '/' + this.field.attribute;
+        }
+    }
 });
 
 /***/ }),
@@ -36523,42 +36513,7 @@ if (false) {
 }
 
 /***/ }),
-/* 47 */
-/***/ (function(module, exports, __webpack_require__) {
-
-var render = function() {
-  var _vm = this
-  var _h = _vm.$createElement
-  var _c = _vm._self._c || _h
-  return _c(
-    "panel-item",
-    { attrs: { field: _vm.field } },
-    [
-      _c("file-pond-wrapper", {
-        attrs: {
-          slot: "value",
-          disabled: true,
-          "allow-image-preview": !_vm.field.multiple,
-          limit: _vm.field.value.length,
-          field: _vm.field
-        },
-        slot: "value"
-      })
-    ],
-    1
-  )
-}
-var staticRenderFns = []
-render._withStripped = true
-module.exports = { render: render, staticRenderFns: staticRenderFns }
-if (false) {
-  module.hot.accept()
-  if (module.hot.data) {
-    require("vue-hot-reload-api")      .rerender("data-v-0224618e", module.exports)
-  }
-}
-
-/***/ }),
+/* 47 */,
 /* 48 */
 /***/ (function(module, exports, __webpack_require__) {
 
@@ -64149,6 +64104,139 @@ if (false) {
   module.hot.accept()
   if (module.hot.data) {
     require("vue-hot-reload-api")      .rerender("data-v-c023248a", module.exports)
+  }
+}
+
+/***/ }),
+/* 52 */,
+/* 53 */,
+/* 54 */
+/***/ (function(module, exports, __webpack_require__) {
+
+// style-loader: Adds some css to the DOM by adding a <style> tag
+
+// load the styles
+var content = __webpack_require__(55);
+if(typeof content === 'string') content = [[module.i, content, '']];
+if(content.locals) module.exports = content.locals;
+// add the styles to the DOM
+var update = __webpack_require__(4)("7f4ef86d", content, false, {});
+// Hot Module Replacement
+if(false) {
+ // When the styles change, update the <style> tags
+ if(!content.locals) {
+   module.hot.accept("!!../../../node_modules/css-loader/index.js!../../../node_modules/vue-loader/lib/style-compiler/index.js?{\"vue\":true,\"id\":\"data-v-0224618e\",\"scoped\":true,\"hasInlineConfig\":true}!../../../node_modules/sass-loader/lib/loader.js!../../../node_modules/vue-loader/lib/selector.js?type=styles&index=0!./DetailField.vue", function() {
+     var newContent = require("!!../../../node_modules/css-loader/index.js!../../../node_modules/vue-loader/lib/style-compiler/index.js?{\"vue\":true,\"id\":\"data-v-0224618e\",\"scoped\":true,\"hasInlineConfig\":true}!../../../node_modules/sass-loader/lib/loader.js!../../../node_modules/vue-loader/lib/selector.js?type=styles&index=0!./DetailField.vue");
+     if(typeof newContent === 'string') newContent = [[module.id, newContent, '']];
+     update(newContent);
+   });
+ }
+ // When the module is disposed, remove the <style> tags
+ module.hot.dispose(function() { update(); });
+}
+
+/***/ }),
+/* 55 */
+/***/ (function(module, exports, __webpack_require__) {
+
+exports = module.exports = __webpack_require__(0)(false);
+// imports
+
+
+// module
+exports.push([module.i, "\n.gallery.editable .gallery-item[data-v-0224618e] {\n  cursor: grab;\n}\n.gallery.editable .gallery-item[data-v-0224618e] {\n  cursor: grab;\n}\n.gallery .gallery-item[data-v-0224618e] {\n  float: left;\n  display: flex;\n  flex-direction: column;\n  justify-content: center;\n  position: relative;\n  border-radius: 10px;\n  background-color: #e8f5fb;\n}\n.gallery .gallery-item .gallery-item-info[data-v-0224618e] {\n    display: flex;\n    background-color: rgba(232, 245, 251, 0.8);\n    border-radius: 10px;\n    z-index: 10;\n}\n.gallery .edit.edit--file[data-v-0224618e] {\n  position: relative;\n  top: auto;\n  right: auto;\n}\n.gallery-item-file.gallery-item[data-v-0224618e] {\n  width: 100%;\n}\n.gallery-item-file.gallery-item .gallery-item-info[data-v-0224618e] {\n    display: flex;\n}\n.gallery-item-file.gallery-item .gallery-item-info .label[data-v-0224618e] {\n      flex-grow: 1;\n}\n.gallery-item-file.gallery-item .gallery-item-info .download[data-v-0224618e] {\n      color: var(--primary-dark);\n}\n.gallery-item-file.gallery-item .gallery-item-info .delete[data-v-0224618e] {\n      align-self: flex-end;\n      color: var(--danger);\n}\n", ""]);
+
+// exports
+
+
+/***/ }),
+/* 56 */
+/***/ (function(module, exports, __webpack_require__) {
+
+var render = function() {
+  var _vm = this
+  var _h = _vm.$createElement
+  var _c = _vm._self._c || _h
+  return _c(
+    "panel-item",
+    { attrs: { field: _vm.field } },
+    [
+      _c("template", { slot: "value" }, [
+        !_vm.field.thumbnails.length
+          ? _c("span", [_vm._v("-")])
+          : _c("div", { staticClass: "gallery" }, [
+              _c(
+                "div",
+                { staticClass: "gallery-list clearfix" },
+                _vm._l(_vm.field.thumbnails, function(item) {
+                  return _c(
+                    "div",
+                    {
+                      staticClass:
+                        "gallery-item gallery-item-file mb-3 p-3 mr-3"
+                    },
+                    [
+                      _c("div", { staticClass: "gallery-item-info" }, [
+                        _vm.field.downloadable
+                          ? _c(
+                              "a",
+                              {
+                                staticClass: "download mr-2",
+                                attrs: {
+                                  href: _vm.downloadPath(item.raw),
+                                  target: "_blank"
+                                }
+                              },
+                              [
+                                _c(
+                                  "svg",
+                                  {
+                                    staticClass: "fill-current",
+                                    attrs: {
+                                      xmlns: "http://www.w3.org/2000/svg",
+                                      width: "16",
+                                      height: "16",
+                                      viewBox: "0 0 20 22",
+                                      "aria-labelledby": "download",
+                                      role: "presentation"
+                                    }
+                                  },
+                                  [
+                                    _c("path", {
+                                      staticClass: "heroicon-ui",
+                                      attrs: {
+                                        d:
+                                          "M11 14.59V3a1 1 0 0 1 2 0v11.59l3.3-3.3a1 1 0 0 1 1.4 1.42l-5 5a1 1 0 0 1-1.4 0l-5-5a1 1 0 0 1 1.4-1.42l3.3 3.3zM3 17a1 1 0 0 1 2 0v3h14v-3a1 1 0 0 1 2 0v3a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-3z"
+                                      }
+                                    })
+                                  ]
+                                )
+                              ]
+                            )
+                          : _vm._e(),
+                        _vm._v(" "),
+                        _c("span", { staticClass: "label" }, [
+                          _vm._v(_vm._s(item.name))
+                        ])
+                      ])
+                    ]
+                  )
+                }),
+                0
+              )
+            ])
+      ])
+    ],
+    2
+  )
+}
+var staticRenderFns = []
+render._withStripped = true
+module.exports = { render: render, staticRenderFns: staticRenderFns }
+if (false) {
+  module.hot.accept()
+  if (module.hot.data) {
+    require("vue-hot-reload-api")      .rerender("data-v-0224618e", module.exports)
   }
 }
 

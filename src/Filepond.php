@@ -44,6 +44,13 @@ class Filepond extends Field
 	private $directory = null;
 
 	/**
+	 * Determin if the file is able to be downloaded.
+	 *
+	 * @var bool
+	 */
+	public $downloadsAreEnabled = true;
+
+	/**
 	 * Create a new field.
 	 *
 	 * @param string $name
@@ -62,6 +69,9 @@ class Filepond extends Field
 		 */
 		$this->showOnIndex = false;
 
+		$this->download(function($request, $model, $fileName) {
+			return Storage::disk($this->disk)->download($fileName);
+		});
 	}
 
 	public function disable(): self
@@ -132,6 +142,32 @@ class Filepond extends Field
 		return $this->mimesTypes('audio/wav', 'audio/mp3', 'audio/ogg', 'audio/webm');
 	}
 
+	/**
+	 * Specify the callback that should be used to create a download HTTP response.
+	 *
+	 * @param callable $downloadResponseCallback
+	 *
+	 * @return $this
+	 */
+	public function download(callable $downloadResponseCallback)
+	{
+		$this->downloadResponseCallback = $downloadResponseCallback;
+
+		return $this;
+	}
+
+	/**
+	 * Disable downloading the file.
+	 *
+	 * @return $this
+	 */
+	public function disableDownload()
+	{
+		$this->downloadsAreEnabled = false;
+
+		return $this;
+	}
+
 	public function withDoka(array $options = []): self
 	{
 		return $this->withMeta([
@@ -166,10 +202,7 @@ class Filepond extends Field
 		$this->disk = $disk;
 		$this->directory = $directory;
 
-		return $this->withMeta([
-			'disk'      => $this->disk,
-			'directory' => $this->directory,
-		]);
+		return $this;
 	}
 
 	public function storeAs(callable $callback)
@@ -371,8 +404,14 @@ class Filepond extends Field
 		}
 
 		return $this->value->map(function($value) {
+			$filePath = Storage::disk($this->disk)->url(self::getPathFromServerId($value['source']));
+			$name = Str::afterLast($filePath, '/');
 
-			return Storage::disk($this->disk)->url(self::getPathFromServerId($value['source']));
+			return [
+				'path' => $filePath,
+				'name' => $name,
+				'raw'  => $value['source'],
+			];
 
 		});
 
@@ -423,17 +462,18 @@ class Filepond extends Field
 	public function jsonSerialize()
 	{
 		return array_merge([
-			'disk'        => $this->disk,
-			'multiple'    => $this->multiple,
-			'disabled'    => request()->route()->controller instanceof ResourceShowController,
-			'thumbnails'  => $this->getThumbnails(),
-			'columns'     => 1,
-			'fullWidth'   => false,
-			'maxHeight'   => 'auto',
-			'limit'       => null,
-			'dokaOptions' => config('nova-filepond.doka.options'),
-			'dokaEnabled' => config('nova-filepond.doka.enabled'),
-			'labels'      => $this->getLabels(),
+			'disk'         => encrypt($this->disk),
+			'multiple'     => $this->multiple,
+			'disabled'     => request()->route()->controller instanceof ResourceShowController,
+			'thumbnails'   => $this->getThumbnails(),
+			'columns'      => 1,
+			'fullWidth'    => false,
+			'maxHeight'    => 'auto',
+			'limit'        => null,
+			'dokaOptions'  => config('nova-filepond.doka.options'),
+			'dokaEnabled'  => config('nova-filepond.doka.enabled'),
+			'labels'       => $this->getLabels(),
+			'downloadable' => $this->downloadsAreEnabled && isset($this->downloadResponseCallback) && !empty($this->value),
 		], $this->meta(), parent::jsonSerialize());
 	}
 
@@ -451,6 +491,22 @@ class Filepond extends Field
 		}
 
 		return $model->{$attribute};
+	}
+
+	/**
+	 * Create an HTTP response to download the underlying field.
+	 *
+	 * @param \Laravel\Nova\Http\Requests\NovaRequest $request
+	 * @param \Laravel\Nova\Resource $resource
+	 * @param string $fileName
+	 *
+	 * @return \Illuminate\Http\Response
+	 */
+	public function toDownloadResponse(NovaRequest $request, $resource, $fileName)
+	{
+		return call_user_func(
+			$this->downloadResponseCallback, $request, $resource->resource, $fileName
+		);
 	}
 
 }

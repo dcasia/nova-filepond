@@ -97,7 +97,7 @@ class FilepondController extends BaseController
 
 	public function load(Request $request)
 	{
-		$disk = $request->input('disk');
+		$disk = decrypt($request->input('disk'));
 
 		$serverId = Filepond::getPathFromServerId($request->input('serverId'));
 
@@ -115,6 +115,23 @@ class FilepondController extends BaseController
 		}
 
 		return $response;
+	}
+
+	public function download(NovaRequest $request)
+	{
+		$resource = $request->findResourceOrFail();
+
+		$file = $request->route()->file;
+
+		$resource->authorizeToView($request);
+
+		$filePath = Filepond::getPathFromServerId($file);
+
+		return $resource->detailFields($request)
+		                ->whereInstanceOf(Filepond::class)
+		                ->findFieldByAttribute($request->field, function () {
+			                abort(404);
+		                })->toDownloadResponse($request, $resource, $filePath);
 	}
 
 	private function getCreationRules(string $resource, NovaRequest $request): array

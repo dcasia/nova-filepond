@@ -1,18 +1,8 @@
 <template>
-
     <p>
-
-        <img v-for="(url, index) of field.thumbnails"
-             :key="index"
-             :src="url"
-             style="object-fit: cover;"
-             class="align-bottom w-8 h-8"
-             :class="{ 'rounded-full': field.rounded, rounded: !field.rounded }"/>
-
         <span v-if="!field.thumbnails.length">&mdash;</span>
-
+        <span v-else>{{ field.thumbnails.length }}</span>
     </p>
-
 </template>
 
 <script>
