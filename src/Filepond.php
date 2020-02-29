@@ -283,13 +283,13 @@ class Filepond extends Field
 		$files = collect(explode(',', $request->input($requestAttribute)))->map(function($file) {
 			return static::getPathFromServerId($file);
 		});
-		dump($files, $currentImages, $requestAttribute);
+
 		$toKeep = $files->intersect($currentImages); // files that exist on the request and on the model
 		$toAppend = $files->diff($currentImages); // files that exist only on the request
 		$toDelete = $currentImages->diff($files); // files that doest exist on the request but exist on the model
 
 		$this->removeImages($toDelete);
-		dump($toAppend);
+
 		foreach($toAppend as $serverId) {
 
 			$file = new File($serverId);
@@ -314,6 +314,7 @@ class Filepond extends Field
 		$fullPath = $this->trimSlashes($this->directory ?? '') . '/' . $this->trimSlashes($name);
 
 		$response = Storage::disk($this->disk)->put($fullPath, file_get_contents($file->getRealPath()));
+		@unlink($file->getRealPath());
 
 		if($response) {
 

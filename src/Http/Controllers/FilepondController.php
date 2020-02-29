@@ -9,6 +9,7 @@ use Illuminate\Http\Response;
 use Illuminate\Routing\Controller as BaseController;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 use Laravel\Nova\Contracts\RelatableField;
 use Laravel\Nova\Fields\BelongsTo;
@@ -39,7 +40,6 @@ class FilepondController extends BaseController
 		$request->offsetSet($attribute, $file);
 
 		try {
-
 			$resourceClass = Nova::resourceForKey($resourceName);
 
 			/**
@@ -58,25 +58,21 @@ class FilepondController extends BaseController
 
 		}
 
-		$tempPath = storage_path('/tmp');
+		$time = date('U');
+		$tempPath = storage_path('tmp');
+		$originalName = $file->getClientOriginalName();
+		$originalName = Str::beforeLast($originalName, '.');
+		$originalName = str_replace(' ', '_', $originalName);
+		$fileName = "{$originalName}-{$resourceName}-{$time}." . $file->guessClientExtension();
 
-		if(!file_exists($tempPath)) {
-			mkdir($tempPath);
-		}
-
-		$filePath = tempnam($tempPath, 'nova-filepond-');
-		$filePath .= '.' . $file->guessClientExtension();
-		$filePathParts = pathinfo($filePath);
-		$finalPath = $file->move($filePathParts['dirname'], $filePathParts['basename']);
-
-		if(!$finalPath) {
-
+		try {
+			$newFile = $file->move($tempPath, $fileName);
+		} catch(\Exception $exception) {
 			return response()->make('Could not save file', 500);
-
 		}
 
 		return response()->make(
-			Filepond::getServerIdFromPath($finalPath->getRealPath())
+			Filepond::getServerIdFromPath($newFile->getRealPath())
 		);
 
 	}
@@ -91,22 +87,17 @@ class FilepondController extends BaseController
 	 */
 	public function revert(Request $request)
 	{
-
 		$filePath = Filepond::getPathFromServerId($request->getContent());
 
 		if(unlink($filePath)) {
-
 			return response()->make();
-
 		}
 
 		return response()->setStatusCode(500);
-
 	}
 
 	public function load(Request $request)
 	{
-
 		$disk = $request->input('disk');
 
 		$serverId = Filepond::getPathFromServerId($request->input('serverId'));
@@ -127,12 +118,10 @@ class FilepondController extends BaseController
 		}
 
 		return $response;
-
 	}
 
 	private function getCreationRules(string $resource, NovaRequest $request): array
 	{
-		/** @var FieldCollection $creatingFields */
 		$creatingFields = ( new $resource($resource::newModel()) )
 			->creationFields($request);
 
@@ -144,11 +133,9 @@ class FilepondController extends BaseController
 
 		return $creatingFields->reject(function($field) use ($request) {
 			return $field->isReadonly($request) || $field instanceof RelatableField;
-		})
-		                      ->mapWithKeys(function($field) use ($request) {
-			                      return $field->getCreationRules($request);
-		                      })
-		                      ->all();
+		})->mapWithKeys(function($field) use ($request) {
+			return $field->getCreationRules($request);
+		})->all();
 	}
 
 }
