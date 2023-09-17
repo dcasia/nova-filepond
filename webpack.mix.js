@@ -1,13 +1,8 @@
-const mix = require('laravel-mix')
+let mix = require('laravel-mix')
+
+require('./nova.mix')
 
 mix.setPublicPath('dist')
     .js('resources/js/field.js', 'js')
-
-// mix.webpackConfig({
-//     resolve: {
-//         alias: {
-//             'vue$': 'vue/dist/vue.esm.js',
-//             'vue-filepond': 'vue-filepond/dist/vue-filepond.esm.js'
-//         }
-//     }
-// })
+    .vue({ version: 3 })
+    .nova('digital-creative/nova-filepond')

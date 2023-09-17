@@ -1,22 +1,29 @@
 <template>
 
     <file-pond
-            v-bind="{ ...$attrs, ...field.labels }"
-            ref="filepond"
-            :style="cssVars"
-            :name="nameField"
-            :image-preview-height="field.multiple ? 150 : null"
-            :allow-multiple="field.multiple"
-            :accepted-file-types="field.mimesTypes"
-            :instant-upload="true"
-            :max-files="limit || field.limit"
-            :server="serverOptions"
-            :allow-image-edit="field.dokaEnabled"
-            :image-edit-editor="editorInstance"
-            :image-edit-instant-edit="true"
-            :disabled="field.disabled"
-            :allow-paste="false"
-            :files="files"/>
+        :name="nameField"
+        label-idle="Drop files here..."
+        :allow-multiple="true"
+        accepted-file-types="image/jpeg, image/png"
+        :server="serverOptions"
+    />
+
+<!--    <file-pond-->
+<!--            v-bind="{ ...$attrs, ...field.labels }"-->
+<!--            ref="filepond"-->
+<!--            :style="cssVars"-->
+<!--            :name="nameField"-->
+<!--            :image-preview-height="field.multiple ? 150 : null"-->
+<!--            :allow-multiple="field.multiple"-->
+<!--            :accepted-file-types="field.mimesTypes"-->
+<!--            :instant-upload="true"-->
+<!--            :max-files="limit || field.limit"-->
+<!--            :server="serverOptions"-->
+<!--            :image-edit-editor="editorInstance"-->
+<!--            :image-edit-instant-edit="true"-->
+<!--            :disabled="field.disabled"-->
+<!--            :allow-paste="false"-->
+<!--            :files="files"/>-->
 
 </template>
 

@@ -5,6 +5,7 @@ declare(strict_types = 1);
 namespace DigitalCreative\Filepond\Http\Controllers;
 
 use DigitalCreative\Filepond\Filepond;
+use Illuminate\Contracts\Container\BindingResolutionException;
 use Illuminate\Foundation\Validation\ValidatesRequests;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller as BaseController;
@@ -15,55 +16,67 @@ use Laravel\Nova\Contracts\RelatableField;
 use Laravel\Nova\Http\Requests\NovaRequest;
 use Laravel\Nova\Nova;
 
-class FilepondController extends BaseController
+class ProcessController extends BaseController
 {
     use ValidatesRequests;
 
     /**
      * Uploads the file to the temporary directory and returns an encrypted path to the file
+     *
+     * @throws BindingResolutionException
      */
-    public function process(NovaRequest $request)
+    public function __invoke(NovaRequest $request)
     {
-        dd(1);
         $attribute = $request->input('attribute');
-        $prefixedAttribute = '__' . $attribute;
-        $file = $request->file($prefixedAttribute);
         $resourceName = $request->input('resourceName');
-
-        $request->offsetSet($attribute, $file);
 
         try {
 
-            $resourceClass = Nova::resourceForKey($resourceName);
+            $resource = Nova::resourceInstanceForKey($resourceName);
 
-            /**
-             * @var resource $resource
-             */
-            $rules = $this->getCreationRules($resourceClass, $request);
+            $rules = $resource
+                ->creationFields($request)
+                ->firstWhere('attribute', $attribute)
+                ->getCreationRules($request);
 
             $this->validate($request, Arr::only($rules, $attribute));
 
         } catch (ValidationException $exception) {
 
-            return response()->json([
-                'message' => $exception->getMessage(),
-                'errors' => $exception->errors(),
-            ], $exception->status);
+            return response()->json(
+                data: [
+                    'message' => $exception->getMessage(),
+                    'errors' => $exception->errors(),
+                ],
+                status: $exception->status,
+            );
 
         }
 
-        $tempPath = '/tmp';
-        $filePath = tempnam($tempPath, 'nova-filepond-');
-        $filePath .= '.' . $file->guessClientExtension();
-        $filePathParts = pathinfo($filePath);
-        $finalPath = $file->move($filePathParts[ 'dirname' ], $filePathParts[ 'basename' ]);
+        $file = $request->file($attribute);
+        $fileName = $file->getClientOriginalName();
 
-        if (!$finalPath) {
-            return response()->make('Could not save file', 500);
+        if (!$path = $file->storeAs('temp', $fileName)) {
+
+            return response()->json(
+                data: [ 'message' => 'Could not save file.' ],
+                status: 500,
+            );
+
         }
+
+//        $tempPath = '/tmp';
+//        $filePath = tempnam($tempPath, 'nova-filepond-');
+//        $filePath .= '.' . $file->guessClientExtension();
+//        $filePathParts = pathinfo($filePath);
+//        $finalPath = $file->move($filePathParts[ 'dirname' ], $filePathParts[ 'basename' ]);
+//
+//        if (!$finalPath) {
+//            return response()->make('Could not save file', 500);
+//        }
 
         return response()->make(
-            Filepond::getServerIdFromPath($finalPath->getRealPath()),
+            Filepond::getServerIdFromPath($path),
         );
     }
 
