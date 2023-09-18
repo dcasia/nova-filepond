@@ -21,6 +21,7 @@
         :allow-image-preview="true"
         :credits="field.credits"
         v-bind="field.labels"
+        @updatefiles="onChange"
         @reorderfiles="onChange"
         @processfile="onChange"
         @removefile="onChange"
