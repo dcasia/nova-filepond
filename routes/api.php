@@ -2,8 +2,9 @@
 
 declare(strict_types = 1);
 
-use DigitalCreative\Filepond\Http\Controllers\FilepondController;
+use DigitalCreative\Filepond\Http\Controllers\LoadController;
 use DigitalCreative\Filepond\Http\Controllers\ProcessController;
+use DigitalCreative\Filepond\Http\Controllers\RevertController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -18,5 +19,5 @@ use Illuminate\Support\Facades\Route;
  */
 
 Route::post('/process', ProcessController::class)->name('nova.filepond.process');
-Route::delete('/revert', [ FilepondController::class, 'revert' ])->name('nova.filepond.revert');
-Route::get('/load', [ FilepondController::class, 'load' ])->name('nova.filepond.load');
+Route::delete('/revert', RevertController::class)->name('nova.filepond.revert');
+Route::get('/load', LoadController::class)->name('nova.filepond.load');

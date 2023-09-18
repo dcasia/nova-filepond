@@ -13,9 +13,7 @@
                 :field="field"
                 :resourceName="resourceName"
                 :errors="errors"
-                :onChange="updateFiles"
-                :onprocessfile="updateFiles"
-                :onremovefile="updateFiles"/>
+                :onChange="updateFiles"/>
 
         </template>
 
@@ -30,11 +28,8 @@
     import FilePondWrapper from './FilePondWrapper'
 
     export default {
-        components: {
-            FilePondWrapper
-        },
+        components: { FilePondWrapper },
         mixins: [ FormField, HandlesValidationErrors ],
-        // props: [ 'resourceName', 'resourceId', 'field' ],
         props: {
             resourceName: String,
             resourceId: String,
@@ -53,17 +48,21 @@
 
             }
 
+            function setInitialValue() {
+                files.value = props.field.value
+            }
+
             function updateFiles() {
                 files.value = getActiveFiles()
             }
 
             function getActiveFiles() {
 
+                /**
+                 * https://pqina.nl/filepond/docs/patterns/api/filepond-object/#filestatus-enum
+                 */
                 return instance.value.instance.getFiles()
-                    .filter(file => {
-                        // https://pqina.nl/filepond/docs/patterns/api/filepond-object/#filestatus-enum
-                        return file.status === 2 || file.status === 5
-                    })
+                    .filter(file => file.status === 2 || file.status === 5)
                     .map(file => file.serverId)
 
             }
@@ -71,69 +70,11 @@
             return {
                 fill,
                 instance,
-                updateFiles
+                updateFiles,
+                setInitialValue
             }
 
         },
-        // computed: {
-        //
-        //     filepondInstance() {
-        //
-        //         return this.$refs[ `${ this.field.attribute }Filepond` ].instance
-        //
-        //     }
-        //
-        // },
-        //
-        // methods: {
-        //
-        //     getActiveFiles() {
-        //
-        //         return this.filepondInstance.getFiles()
-        //             .filter(file => {
-        //                 // https://pqina.nl/filepond/docs/patterns/api/filepond-object/#filestatus-enum
-        //                 return file.status === 2 || file.status === 5
-        //             })
-        //             .map(file => file.serverId)
-        //             .join(',')
-        //
-        //     },
-        //
-        //     updateFiles() {
-        //
-        //         this.value = this.getActiveFiles()
-        //
-        //     },
-        //
-        //     /*
-        //      * Set the initial, internal value for the field.
-        //      */
-        //     setInitialValue() {
-        //
-        //         this.value = this.getActiveFiles()
-        //
-        //     },
-        //
-        //     /**
-        //      * Fill the given FormData object with the field's internal value.
-        //      */
-        //     fill(formData) {
-        //
-        //         if (this.value.length) {
-        //
-        //             formData.append(this.field.attribute, this.value)
-        //
-        //         }
-        //
-        //     },
-        //
-        //     /**
-        //      * Update the field's internal value.
-        //      */
-        //     handleChange(value) {
-        //         this.value = value
-        //     }
-        // }
     }
 
 </script>

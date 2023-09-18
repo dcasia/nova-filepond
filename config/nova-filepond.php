@@ -4,10 +4,12 @@ declare(strict_types = 1);
 
 return [
 
-    'disk' => 'public',
+    'disk' => config('nova.storage_disk', 'public'),
+    'temp_disk' => 'local',
+    'temp_path' => 'nova-filepond/temp',
 
     /**
-     * All the values will pass through the trans() function
+     * All the values will pass through the Nova::__() function
      */
     'labels' => [
         'decimalSeparator' => 'auto',

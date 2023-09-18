@@ -5,7 +5,6 @@ declare(strict_types = 1);
 namespace DigitalCreative\Filepond;
 
 use Closure;
-use Exception;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\File as SymfonyFile;
 use Illuminate\Http\UploadedFile;
@@ -13,85 +12,47 @@ use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Laravel\Nova\Fields\File;
-use Laravel\Nova\Http\Controllers\ResourceShowController;
 use Laravel\Nova\Http\Requests\NovaRequest;
+use Laravel\Nova\Nova;
 
 class Filepond extends File
 {
     public $component = 'filepond';
 
-//    public $storeAsCallback;
-//
-//    /**
-//     * @var string
-//     */
-//    private $disk = 'public';
-//
-//    /**
-//     * @var bool
-//     */
     private bool $multiple = false;
-//
-//    /**
-//     * @var null
-//     */
-//    private $directory = null;
 
-//    /**
-//     * Create a new field.
-//     *
-//     * @param string $name
-//     * @param callable|string|null $attribute
-//     */
-//    public function __construct($name, $attribute = null, ?callable $resolveCallback = null)
-//    {
-//        parent::__construct($name, $attribute, $resolveCallback);
-//
-//        /**
-//         * Temporarily as it currently only supports image and it`s not very pretty yet
-//         */
-//        $this->showOnIndex = false;
-//    }
+    public function disable(): self
+    {
+        return $this->withMeta([ 'disabled' => true ]);
+    }
 
-//    public function disable(): self
-//    {
-//        return $this->withMeta([ 'disabled' => true ]);
-//    }
-//
-//    public function fullWidth(): self
-//    {
-//        return $this->withMeta([ 'fullWidth' => true ]);
-//    }
-//
-//    public function columns(int $columns): self
-//    {
-//        return $this->withMeta([ 'columns' => $columns ]);
-//    }
-//
-//    public function limit(int $amount): self
-//    {
-//        return $this->withMeta([ 'limit' => $amount ]);
-//    }
-//
-//    public function mimesTypes($mimesTypes): self
-//    {
-//        $mimesTypes = is_array($mimesTypes) ? $mimesTypes : func_get_args();
-//
-//        return $this->withMeta(
-//            [ 'mimesTypes' => array_merge($this->meta[ 'mimesTypes' ] ?? [], $mimesTypes) ],
-//        );
-//    }
-//
-//    public function maxHeight(string $heightWithUnit): self
-//    {
-//        return $this->withMeta([ 'maxHeight' => $heightWithUnit ]);
-//    }
-//
-//    public static function guessMimeType(string $extension): ?string
-//    {
-//        return MimeTypes::getDefault()->getMimeTypes($extension)[ 0 ] ?? null;
-//    }
-//
+    public function withoutCredits(): self
+    {
+        return $this->withMeta([ 'credits' => false ]);
+    }
+
+    public function columns(int $columns): self
+    {
+        return $this->withMeta([ 'columns' => $columns ]);
+    }
+
+    public function limit(int $amount): self
+    {
+        return $this->withMeta([ 'limit' => $amount ]);
+    }
+
+    public function mimesTypes(array $mimesTypes): self
+    {
+        return $this->withMeta(
+            [ 'mimesTypes' => array_merge($this->meta[ 'mimesTypes' ] ?? [], $mimesTypes) ],
+        );
+    }
+
+    public function maxHeight(string $heightWithUnit): self
+    {
+        return $this->withMeta([ 'maxHeight' => $heightWithUnit ]);
+    }
+
     public function single(): self
     {
         $this->multiple = false;
@@ -106,81 +67,68 @@ class Filepond extends File
         return $this;
     }
 
-//    public function image(): self
-//    {
-//        return $this->mimesTypes('image/jpeg', 'image/png', 'image/svg+xml');
-//    }
-//
-//    public function video(): self
-//    {
-//        return $this->mimesTypes('video/mp4', 'video/webm', 'video/ogg');
-//    }
-//
-//    public function audio(): self
-//    {
-//        return $this->mimesTypes('audio/wav', 'audio/mp3', 'audio/ogg', 'audio/webm');
-//    }
-//
-//    public function labels(array $labels): self
-//    {
-//        return $this->withMeta([ 'labels' => $labels ]);
-//    }
+    public function allowReorder(): self
+    {
+        return $this->withMeta([ 'allowReorder' => true ]);
+    }
 
-    /**
-     * @return $this
-     */
-//    public function disk(string $disk, ?string $directory = null)
-//    {
-//        $this->disk = $disk;
-//        $this->directory = $directory;
-//
-//        return $this;
-//    }
-//
-//    public function storeAs(callable $callback)
-//    {
-//        $this->storeAsCallback = $callback;
-//
-//        return $this;
-//    }
-//
-//    public function updateRules($rules)
-//    {
-//        if ($this->shouldApplyRules()) {
-//            $this->updateRules = ($rules instanceof Rule || is_string($rules)) ? func_get_args() : $rules;
-//        }
-//
-//        return $this;
-//    }
-//
-//    public function creationRules($rules)
-//    {
-//        if ($this->shouldApplyRules()) {
-//            $this->creationRules = ($rules instanceof Rule || is_string($rules)) ? func_get_args() : $rules;
-//        }
-//
-//        return $this;
-//    }
-//
-//    public function rules($rules)
-//    {
-//        if ($this->shouldApplyRules()) {
-//            $this->rules = ($rules instanceof Rule || is_string($rules)) ? func_get_args() : $rules;
-//        }
-//
-//        return $this;
-//    }
-//
-//    private function shouldApplyRules(): bool
-//    {
-//        return request()->routeIs('nova.filepond.process') || request()->input($this->attribute) === null;
-//    }
+    public function disallowPaste(): self
+    {
+        return $this->withMeta([ 'allowPaste' => false ]);
+    }
+
+    public function disallowDrop(): self
+    {
+        return $this->withMeta([ 'allowDrop' => false ]);
+    }
+
+    public function disallowBrowse(): self
+    {
+        return $this->withMeta([ 'allowBrowse' => false ]);
+    }
+
+    public function image(): self
+    {
+        return $this->mimesTypes([ 'image/jpeg', 'image/png', 'image/svg+xml', 'image/webp' ]);
+    }
+
+    public function video(): self
+    {
+        return $this->mimesTypes([ 'video/mp4', 'video/webm', 'video/ogg' ]);
+    }
+
+    public function audio(): self
+    {
+        return $this->mimesTypes([ 'audio/wav', 'audio/mp3', 'audio/ogg', 'audio/webm' ]);
+    }
+
+    public function labels(array $labels): self
+    {
+        return $this->withMeta([ 'labels' => $labels ]);
+    }
 
     protected function fillAttribute(NovaRequest $request, $requestAttribute, $model, $attribute): Closure
     {
-        $callbacks = $request->collect($this->attribute)
+        $files = $request->collect($this->attribute);
+        $currentFiles = $model->{$this->attribute};
+        $model->{$this->attribute} = $this->multiple ? [] : null;
+
+        $callbacks = $files
             ->map(fn (string $file) => static::getPathFromServerId($file))
-            ->map(function (string $file, int $index) use ($request, $requestAttribute, $model, $attribute) {
+            ->map(function (string $file, int $index) use ($request, $requestAttribute, $model, $attribute, $currentFiles) {
+
+                /**
+                 * If the file already exists on the model, means user want to keep this file, therefore we skip it
+                 */
+                if (is_array($currentFiles) && in_array($file, $currentFiles)) {
+
+                    $attribute = sprintf('%s->%s', $attribute, $index);
+
+                    $model->$attribute = $file;
+
+                    return null;
+
+                }
 
                 $storage = Storage::disk($this->disk)->path($file);
                 $file = new SymfonyFile($storage);
@@ -189,13 +137,13 @@ class Filepond extends File
                 $clonedRequest = $request::createFromBase($request);
                 $clonedRequest->files->add([ $requestAttribute => $file ]);
 
-                $fakeModel = new class extends Model {
+                $fakeModel = new class() extends Model {
                 };
-                $fakeModel->{$attribute} = $model->{$attribute};
-
-                $modelAttribute = $attribute;
 
                 $callback = parent::fillAttribute($clonedRequest, $requestAttribute, $fakeModel, $attribute);
+
+                $modelAttribute = $attribute;
+                $data = $fakeModel->getAttributes();
 
                 if ($this->multiple) {
 
@@ -203,142 +151,78 @@ class Filepond extends File
                      * If multiple files are uploaded we need to make sure that the attribute is an array
                      */
                     if ($index === 0) {
-                        $model->$attribute = [];
+                        $model->{$attribute} = [];
                     }
 
-                    $modelAttribute = "$attribute->$index";
+                    $modelAttribute .= "->$index";
+
+                    /**
+                     * if the user called ->store() and returned [ $attribute => string ] or string
+                     * we assume the user wants to save it in a flat array
+                     */
+                    if (count($data) === 1 && isset($data[ $attribute ])) {
+                        $data = $data[ $attribute ];
+                    }
+
+                } else {
+
+                    $data = $data[ $attribute ];
 
                 }
 
-                data_set($model, $modelAttribute, $fakeModel->$attribute);
-
-                collect($fakeModel->getAttributes())->except($attribute)
-                    ->each(fn (mixed $value, string $key) => data_set($model, $key, $value));
+                $model->{$modelAttribute} = $data;
 
                 return $callback;
 
             })
             ->filter();
 
-        return function () use ($callbacks) {
+//        dd(array_diff($currentFiles, $model->{$this->attribute}));
+
+        return function () use ($callbacks): void {
 
             foreach ($callbacks as $callback) {
-                $callback();
+
+                if ($callback instanceof Closure) {
+                    $callback();
+                }
+
             }
 
         };
 
-//        $currentImages = collect($model->{$requestAttribute});
-//
-//        /**
-//         * null when all images are removed
-//         */
-//        if ($request->input($requestAttribute) === null) {
-//
-//            $this->removeImages($currentImages);
-//
-//            $model->setAttribute($requestAttribute, null);
-//
-//            return;
-//
-//        }
-//
-//        if ($this->multiple === false) {
-//
-//            $serverId = static::getPathFromServerId($request->input($requestAttribute));
-//
-//            /**
-//             * If no changes were made the first image should match the given serverId
-//             */
-//            if ($currentImages->first() === $serverId) {
-//                return;
-//            }
-//
-//            $this->removeImages($currentImages);
-//
-//            $file = Storage::disk($this->disk)->move($serverId, $this->moveFile(new File($serverId)));
-//
-//            $model->setAttribute($attribute, $this->moveFile($file));
-//
-//            return;
-//
-//        }
-//
-//        /**
-//         * If it`s a multiple files request
-//         */
-//
-//        $files = collect(explode(',', $request->input($requestAttribute)))->map(function ($file) {
-//            return static::getPathFromServerId($file);
-//        });
-//
-//        dd($files);
-//
-//        $toKeep = $files->intersect($currentImages); // files that exist on the request and on the model
-//        $toAppend = $files->diff($currentImages); // files that exist only on the request
-//        $toDelete = $currentImages->diff($files); // files that doest exist on the request but exist on the model
-//
-//        $this->removeImages($toDelete);
-//
-//        foreach ($toAppend as $serverId) {
-//
-//            $file = new File($serverId);
-//
-//            $toKeep->push($this->moveFile($file));
-//
-//        }
-//
-//        $model->setAttribute($attribute, $toKeep->values());
+        //        /**
+        //         * If it`s a multiple files request
+        //         */
+        //
+        //        $files = collect(explode(',', $request->input($requestAttribute)))->map(function ($file) {
+        //            return static::getPathFromServerId($file);
+        //        });
+        //
+        //        dd($files);
+        //
+        //        $toKeep = $files->intersect($currentImages); // files that exist on the request and on the model
+        //        $toAppend = $files->diff($currentImages); // files that exist only on the request
+        //        $toDelete = $currentImages->diff($files); // files that doest exist on the request but exist on the model
+        //
+        //        $this->removeImages($toDelete);
+        //
+        //        foreach ($toAppend as $serverId) {
+        //
+        //            $file = new File($serverId);
+        //
+        //            $toKeep->push($this->moveFile($file));
+        //
+        //        }
+        //
+        //        $model->setAttribute($attribute, $toKeep->values());
     }
 
-    private function trimSlashes(string $path): string
+    protected function resolveAttribute($resource, $attribute): Collection
     {
-        return trim(rtrim($path, '/'), '/');
+        return collect(parent::resolveAttribute($resource, $attribute))
+            ->map(fn (string $value) => $this->getServerIdFromPath($value));
     }
-
-    private function moveFile(File $file): string
-    {
-        $name = $this->storeAsCallback ? call_user_func($this->storeAsCallback, $file) : $file->getBasename();
-        $fullPath = $this->trimSlashes($this->directory ?? '') . '/' . $this->trimSlashes($name);
-
-        $response = Storage::disk($this->disk)->put($fullPath, file_get_contents($file->getRealPath()));
-
-        if ($response) {
-            return $this->trimSlashes($fullPath);
-        }
-
-        throw new Exception(__('Failed to upload file.'));
-    }
-
-    private function removeImages(Collection $images): void
-    {
-        foreach ($images as $image) {
-            Storage::disk($this->disk)->delete($image);
-        }
-    }
-
-    /**
-     * Resolve the given attribute from the given resource.
-     *
-     * @param string $attribute
-     *
-     * @return mixed
-     */
-//    protected function resolveAttribute($resource, $attribute): Collection
-//    {
-//        $value = parent::resolveAttribute($resource, $attribute);
-//
-//        return collect($value)->map(function ($value) {
-//
-//            return [
-//                'source' => $this->getServerIdFromPath($value),
-//                'options' => [
-//                    'type' => 'local',
-//                ],
-//            ];
-//
-//        });
-//    }
 
     private function getThumbnails(): Collection
     {
@@ -347,33 +231,18 @@ class Filepond extends File
         }
 
         return $this->value->map(function ($value) {
-            return Storage::disk($this->disk)->url(self::getPathFromServerId($value[ 'source' ]));
+            return Storage::disk($this->disk)->url(self::getPathFromServerId($value));
         });
     }
 
-    /**
-     * Converts the given path into a filepond server id
-     */
     public static function getServerIdFromPath(string $path): string
     {
         return encrypt($path);
     }
 
-    /**
-     * Converts the given filepond server id into a path
-     */
     public static function getPathFromServerId(string $serverId): string
     {
         return decrypt($serverId);
-    }
-
-    private function getLabels(): Collection
-    {
-        return collect(config('nova-filepond.labels', []))
-            ->merge($this->meta[ 'labels' ] ?? [])
-            ->mapWithKeys(function ($label, $key) {
-                return [ 'label' . Str::title($key) => trans($label) ];
-            });
     }
 
     /**
@@ -381,8 +250,27 @@ class Filepond extends File
      */
     public function jsonSerialize(): array
     {
-        return array_merge([
+        return array_merge(parent::jsonSerialize(),[
             'multiple' => $this->multiple,
-        ], parent::jsonSerialize());
+            'thumbnails' => $this->getThumbnails(),
+            'disk' => $this->getStorageDisk(),
+            'labels' => $this->getLabels(),
+        ]);
+    }
+
+    private function getLabels(): Collection
+    {
+        return collect(config('nova-filepond.labels', []))
+            ->merge($this->meta[ 'labels' ] ?? [])
+            ->mapWithKeys(fn (string $label, string $key) => [
+                sprintf('label%s', Str::title($key)) => Nova::__($label),
+            ]);
+    }
+
+    private function removeImages(Collection $images): void
+    {
+        foreach ($images as $image) {
+            Storage::disk($this->disk)->delete($image);
+        }
     }
 }
