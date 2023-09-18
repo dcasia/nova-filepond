@@ -36,7 +36,7 @@
     import FilePondPluginImagePreview from 'filepond-plugin-image-preview'
     import FilePondPluginMediaPreview from 'filepond-plugin-media-preview'
     import FilePondPluginImageExifOrientation from 'filepond-plugin-image-exif-orientation'
-    import FilePondPluginFileValidateSize from 'filepond-plugin-file-validate-size';
+    import FilePondPluginFileValidateSize from 'filepond-plugin-file-validate-size'
 
     import 'filepond/dist/filepond.min.css'
     import 'filepond-plugin-image-preview/dist/filepond-plugin-image-preview.min.css'
@@ -81,7 +81,6 @@
                             return formData
                         },
                         onerror: errors => {
-                            console.log(JSON.parse(errors))
                             props.errors.record(JSON.parse(errors))
                         }
                     },
@@ -111,7 +110,6 @@
         }
 
         .filepond--panel-root {
-            //transition: all 250ms;
             background-color: rgba(var(--colors-gray-900));
             border-color: rgba(var(--colors-gray-700));
         }
@@ -147,8 +145,6 @@
     }
 
     .filepond--panel-root {
-        //transition: all 250ms;
-
         border-radius: .25rem;
         border-width: 1px;
         border-color: rgba(var(--colors-gray-300));

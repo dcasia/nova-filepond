@@ -124,7 +124,7 @@ class Filepond extends File
 
                     $attribute = sprintf('%s->%s', $attribute, $index);
 
-                    $model->$attribute = $file;
+                    $model->{$attribute} = $file;
 
                     return null;
 
@@ -176,8 +176,6 @@ class Filepond extends File
 
             })
             ->filter();
-
-//        dd(array_diff($currentFiles, $model->{$this->attribute}));
 
         return function () use ($callbacks): void {
 
@@ -250,7 +248,7 @@ class Filepond extends File
      */
     public function jsonSerialize(): array
     {
-        return array_merge(parent::jsonSerialize(),[
+        return array_merge(parent::jsonSerialize(), [
             'multiple' => $this->multiple,
             'thumbnails' => $this->getThumbnails(),
             'disk' => $this->getStorageDisk(),
