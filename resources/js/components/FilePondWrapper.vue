@@ -18,7 +18,7 @@
         :allow-paste="field.allowPaste"
         :allow-drop="field.allowDrop"
         :allow-browse="field.allowBrowse"
-        :allow-image-preview="true"
+        :allow-image-preview="field.preview === undefined ? true : field.preview"
         :credits="field.credits"
         v-bind="field.labels"
         @updatefiles="onChange"
@@ -127,6 +127,35 @@
             background-color: rgba(var(--colors-gray-700));
         }
 
+        .filepond--image-preview-overlay {
+            color: rgba(var(--colors-gray-400))
+        }
+
+        .filepond--item-panel {
+            background: rgba(var(--colors-gray-800));
+        }
+
+    }
+
+    [data-filepond-item-state*='error'] .filepond--item-panel,
+    [data-filepond-item-state*='invalid'] .filepond--item-panel {
+        background-color: rgba(var(--colors-red-500));
+    }
+
+    [data-filepond-item-state='processing-complete'] .filepond--item-panel {
+        background-color: rgba(var(--colors-green-500));
+    }
+
+    .filepond--file-wrapper {
+        background: transparent;
+    }
+
+    .filepond--item-panel {
+        background: rgba(var(--colors-gray-400));
+    }
+
+    .filepond--image-preview-overlay {
+        color: rgba(var(--colors-gray-500))
     }
 
     .filepond--image-preview {

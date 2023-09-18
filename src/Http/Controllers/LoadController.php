@@ -14,12 +14,11 @@ class LoadController
     public function __invoke(NovaRequest $request): BinaryFileResponse
     {
         $serverId = Filepond::getPathFromServerId($request->input('serverId'));
-        $disk = $request->input('disk');
 
         return response()->file(
-            file: Storage::disk($disk)->path($serverId),
+            file: Storage::disk($serverId[ 'disk' ])->path($serverId[ 'path' ]),
             headers: [
-                'Content-Disposition' => sprintf('inline; filename="%s"', basename($serverId)),
+                'Content-Disposition' => sprintf('inline; filename="%s"', basename($serverId[ 'filename' ])),
             ],
         );
     }

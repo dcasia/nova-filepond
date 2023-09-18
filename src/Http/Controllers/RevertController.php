@@ -17,7 +17,7 @@ class RevertController
      */
     public function __invoke(NovaRequest $request): Response
     {
-        $filePath = Filepond::getPathFromServerId($request->getContent());
+        $filePath = Filepond::getPathFromServerId($request->getContent())[ 'path' ];
 
         if (Storage::disk(config('nova-filepond.temp_disk'))->deleteDirectory(dirname($filePath))) {
             return response()->make();

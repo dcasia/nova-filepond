@@ -70,7 +70,7 @@ class ProcessController extends BaseController
         }
 
         return response()->make(
-            Filepond::getServerIdFromPath($path),
+            Filepond::getServerIdFromPath($path,$fileName ),
         );
     }
 }

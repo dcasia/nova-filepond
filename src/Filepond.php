@@ -21,12 +21,29 @@ class Filepond extends File
 
     private bool $multiple = false;
 
+    public function __construct($name, $attribute = null, $disk = null, $storageCallback = null)
+    {
+        parent::__construct($name, $attribute, $disk, $storageCallback);
+
+        $this->delete(function (NovaRequest $request, Model $model, string $disk, string $path) {
+
+            return Collection::wrap($this->value)->map(function (string $file) {
+
+                Storage::disk($this->getStorageDisk())->delete(static::getPathFromServerId($file)[ 'path' ]);
+
+                return $this->columnsThatShouldBeDeleted();
+
+            });
+
+        });
+    }
+
     public function disable(): self
     {
         return $this->withMeta([ 'disabled' => true ]);
     }
 
-    public function withoutCredits(): self
+    public function disableCredits(): self
     {
         return $this->withMeta([ 'credits' => false ]);
     }
@@ -65,6 +82,11 @@ class Filepond extends File
         $this->multiple = true;
 
         return $this;
+    }
+
+    public function disablePreview(): self
+    {
+        return $this->withMeta([ 'preview' => false ]);
     }
 
     public function allowReorder(): self
@@ -109,33 +131,32 @@ class Filepond extends File
 
     protected function fillAttribute(NovaRequest $request, $requestAttribute, $model, $attribute): Closure
     {
-        $files = $request->collect($this->attribute);
-        $currentFiles = $model->{$this->attribute};
+        $original = Collection::wrap($model->{$this->attribute});
+        $currentFiles = $original->map(fn (string|array $value) => $this->resolveFileValue($value));
+
         $model->{$this->attribute} = $this->multiple ? [] : null;
 
-        $callbacks = $files
+        $callbacks = $request->collect($this->attribute)
             ->map(fn (string $file) => static::getPathFromServerId($file))
-            ->map(function (string $file, int $index) use ($request, $requestAttribute, $model, $attribute, $currentFiles) {
+            ->map(function (array $file, int $index) use ($request, $requestAttribute, $model, $attribute, $currentFiles, $original) {
 
                 /**
                  * If the file already exists on the model, means user want to keep this file, therefore we skip it
                  */
-                if (is_array($currentFiles) && in_array($file, $currentFiles)) {
+                if ($currentFiles->contains($file[ 'path' ])) {
+
+                    $data = $original->firstWhere($attribute, $file[ 'path' ]);
 
                     $attribute = sprintf('%s->%s', $attribute, $index);
 
-                    $model->{$attribute} = $file;
+                    $model->{$attribute} = $data;
 
                     return null;
 
                 }
 
-                $storage = Storage::disk($this->disk)->path($file);
-                $file = new SymfonyFile($storage);
-                $file = new UploadedFile($file->getRealPath(), $file->getFilename(), $file->getMimeType(), null, true);
-
                 $clonedRequest = $request::createFromBase($request);
-                $clonedRequest->files->add([ $requestAttribute => $file ]);
+                $clonedRequest->files->add([ $requestAttribute => $this->toUploadedFile($file[ 'path' ]) ]);
 
                 $fakeModel = new class() extends Model {
                 };
@@ -172,13 +193,30 @@ class Filepond extends File
 
                 $model->{$modelAttribute} = $data;
 
-                return $callback;
+                /**
+                 * Cleanup the temp directory
+                 */
+                return function () use ($file) {
+                    Storage::disk(config('nova-filepond.temp_disk'))->deleteDirectory(dirname($file[ 'path' ]));
+                };
 
-            })
-            ->filter();
+            });
 
-        return function () use ($callbacks): void {
+        $finalFiles = Collection::wrap($model->{$this->attribute})->map(fn (string|array $value) => $this->resolveFileValue($value));
+        $toDelete = $currentFiles->diff($finalFiles);
 
+        return function () use ($callbacks, $toDelete): void {
+
+            /**
+             * Delete every file that is not in the new result
+             */
+            foreach ($toDelete as $file) {
+                Storage::disk($this->getStorageDisk())->delete($file);
+            }
+
+            /**
+             * Delete all temp files that were uploaded
+             */
             foreach ($callbacks as $callback) {
 
                 if ($callback instanceof Closure) {
@@ -188,57 +226,51 @@ class Filepond extends File
             }
 
         };
-
-        //        /**
-        //         * If it`s a multiple files request
-        //         */
-        //
-        //        $files = collect(explode(',', $request->input($requestAttribute)))->map(function ($file) {
-        //            return static::getPathFromServerId($file);
-        //        });
-        //
-        //        dd($files);
-        //
-        //        $toKeep = $files->intersect($currentImages); // files that exist on the request and on the model
-        //        $toAppend = $files->diff($currentImages); // files that exist only on the request
-        //        $toDelete = $currentImages->diff($files); // files that doest exist on the request but exist on the model
-        //
-        //        $this->removeImages($toDelete);
-        //
-        //        foreach ($toAppend as $serverId) {
-        //
-        //            $file = new File($serverId);
-        //
-        //            $toKeep->push($this->moveFile($file));
-        //
-        //        }
-        //
-        //        $model->setAttribute($attribute, $toKeep->values());
     }
 
     protected function resolveAttribute($resource, $attribute): Collection
     {
-        return collect(parent::resolveAttribute($resource, $attribute))
-            ->map(fn (string $value) => $this->getServerIdFromPath($value));
-    }
-
-    private function getThumbnails(): Collection
-    {
-        if (blank($this->value)) {
-            return collect();
-        }
-
-        return $this->value->map(function ($value) {
-            return Storage::disk($this->disk)->url(self::getPathFromServerId($value));
+        return collect(parent::resolveAttribute($resource, $attribute))->map(function (string|array $value) {
+            return $this->resolveEncryptedServerId($value);
         });
     }
 
-    public static function getServerIdFromPath(string $path): string
+    private function resolveEncryptedServerId(string|array $value): string
     {
-        return encrypt($path);
+        return $this->getServerIdFromPath(
+            $this->resolveFileValue($value),
+            $this->resolveOriginalName($value),
+        );
     }
 
-    public static function getPathFromServerId(string $serverId): string
+    private function resolveFileValue(string|array $value): string
+    {
+        if (is_array($value)) {
+            $value = $value[ $this->attribute ];
+        }
+
+        return $value;
+    }
+
+    private function resolveOriginalName(string|array $value): string
+    {
+        if (is_array($value)) {
+            $value = $value[ $this->originalNameColumn ];
+        }
+
+        return $value;
+    }
+
+    public static function getServerIdFromPath(string $path, string $filename): string
+    {
+        return encrypt([
+            'path' => $path,
+            'filename' => $filename,
+            'disk' => config('nova-filepond.disk'),
+        ]);
+    }
+
+    public static function getPathFromServerId(string $serverId): array
     {
         return decrypt($serverId);
     }
@@ -250,7 +282,6 @@ class Filepond extends File
     {
         return array_merge(parent::jsonSerialize(), [
             'multiple' => $this->multiple,
-            'thumbnails' => $this->getThumbnails(),
             'disk' => $this->getStorageDisk(),
             'labels' => $this->getLabels(),
         ]);
@@ -265,10 +296,11 @@ class Filepond extends File
             ]);
     }
 
-    private function removeImages(Collection $images): void
+    private function toUploadedFile(string $file): UploadedFile
     {
-        foreach ($images as $image) {
-            Storage::disk($this->disk)->delete($image);
-        }
+        $storage = Storage::disk(config('nova-filepond.temp_disk'))->path($file);
+        $file = new SymfonyFile($storage);
+
+        return new UploadedFile($file->getRealPath(), $file->getFilename(), $file->getMimeType(), null, true);
     }
 }
