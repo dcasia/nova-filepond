@@ -14,11 +14,14 @@
         :files="files"
         :disabled="field.disabled"
         :allow-multiple="field.multiple"
-        :allow-reorder="field.allowReorder"
+        :allow-reorder="allowReorder === undefined ? field.allowReorder : allowReorder"
         :allow-paste="field.allowPaste"
         :allow-drop="field.allowDrop"
         :allow-browse="field.allowBrowse"
+        :allow-remove="allowRemove === undefined ? field.deletable : allowRemove"
         :allow-image-preview="field.preview === undefined ? true : field.preview"
+        :allow-video-preview="field.preview === undefined ? true : field.preview"
+        :allow-audio-preview="field.preview === undefined ? true : field.preview"
         :credits="field.credits"
         v-bind="field.labels"
         @updatefiles="onChange"
@@ -53,18 +56,13 @@
 
     export default {
         components: { FilePond },
-        props: [ 'field', 'resourceName', 'onChange', 'errors', 'columns', 'limit' ],
+        props: [ 'field', 'resourceName', 'onChange', 'errors', 'columns', 'limit', 'allowReorder', 'allowRemove' ],
         setup(props) {
 
             return {
                 instance: ref(),
                 nameField: props.field.attribute,
-                files: [ ...props.field.value ].map(file => ({
-                    source: file,
-                    options: {
-                        type: 'local',
-                    }
-                })),
+                files: [ ...props.field.value ],
                 cssVars: {
                     '--filepond-column': (100 / (props.columns || props.field.columns)) + '%',
                     '--filepond-max-height': props.field.maxHeight
@@ -72,7 +70,7 @@
                 serverOptions: {
                     url: '/nova-vendor/nova-filepond',
                     revert: '/revert',
-                    load: `/load/?disk=${ props.field.disk }&serverId=`,
+                    load: `/load/?serverId=`,
                     process: {
                         url: '/process',
                         ondata: formData => {
@@ -86,7 +84,7 @@
                         }
                     },
                     headers: {
-                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
                     }
                 }
             }
@@ -155,7 +153,18 @@
     }
 
     .filepond--image-preview-overlay {
-        color: rgba(var(--colors-gray-500))
+
+        &.filepond--image-preview-overlay-idle {
+            color: rgba(var(--colors-gray-500));
+        }
+
+        &.filepond--image-preview-overlay-success {
+            color: rgba(var(--colors-green-500));
+        }
+
+        &.filepond--image-preview-overlay-failure {
+            color: rgba(var(--colors-red-500));
+        }
     }
 
     .filepond--image-preview {

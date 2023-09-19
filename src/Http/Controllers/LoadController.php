@@ -4,8 +4,7 @@ declare(strict_types = 1);
 
 namespace DigitalCreative\Filepond\Http\Controllers;
 
-use DigitalCreative\Filepond\Filepond;
-use Illuminate\Support\Facades\Storage;
+use DigitalCreative\Filepond\Data\Data;
 use Laravel\Nova\Http\Requests\NovaRequest;
 use Symfony\Component\HttpFoundation\BinaryFileResponse;
 
@@ -13,12 +12,12 @@ class LoadController
 {
     public function __invoke(NovaRequest $request): BinaryFileResponse
     {
-        $serverId = Filepond::getPathFromServerId($request->input('serverId'));
+        $data = Data::fromEncrypted($request->input('serverId'));
 
         return response()->file(
-            file: Storage::disk($serverId[ 'disk' ])->path($serverId[ 'path' ]),
+            file: $data->absolutePath(),
             headers: [
-                'Content-Disposition' => sprintf('inline; filename="%s"', basename($serverId[ 'filename' ])),
+                'Content-Disposition' => sprintf('inline; filename="%s"', basename($data->filename)),
             ],
         );
     }

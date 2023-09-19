@@ -6,6 +6,8 @@
 
             <FilePondWrapper
                 :disabled="true"
+                :allow-reorder="false"
+                :allow-remove="false"
                 :limit="field.value.length"
                 :field="field"/>
 

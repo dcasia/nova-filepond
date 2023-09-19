@@ -5,6 +5,8 @@ declare(strict_types = 1);
 namespace DigitalCreative\Filepond;
 
 use Closure;
+use DigitalCreative\Filepond\Data\Data;
+use Exception;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\File as SymfonyFile;
 use Illuminate\Http\UploadedFile;
@@ -14,6 +16,7 @@ use Illuminate\Support\Str;
 use Laravel\Nova\Fields\File;
 use Laravel\Nova\Http\Requests\NovaRequest;
 use Laravel\Nova\Nova;
+use RuntimeException;
 
 class Filepond extends File
 {
@@ -27,13 +30,15 @@ class Filepond extends File
 
         $this->delete(function (NovaRequest $request, Model $model, string $disk, string $path) {
 
-            return Collection::wrap($this->value)->map(function (string $file) {
+            return Collection::wrap($this->value)
+                ->map(fn (array $encryptedData) => Data::fromEncrypted($encryptedData[ 'source' ]))
+                ->map(function (Data $data) {
 
-                Storage::disk($this->getStorageDisk())->delete(static::getPathFromServerId($file)[ 'path' ]);
+                    $data->deleteFile();
 
-                return $this->columnsThatShouldBeDeleted();
+                    return $this->columnsThatShouldBeDeleted();
 
-            });
+                });
 
         });
     }
@@ -137,17 +142,21 @@ class Filepond extends File
         $model->{$this->attribute} = $this->multiple ? [] : null;
 
         $callbacks = $request->collect($this->attribute)
-            ->map(fn (string $file) => static::getPathFromServerId($file))
-            ->map(function (array $file, int $index) use ($request, $requestAttribute, $model, $attribute, $currentFiles, $original) {
+            ->map(fn (string $encryptedData) => Data::fromEncrypted($encryptedData))
+            ->map(function (Data $file, int $index) use ($request, $requestAttribute, $model, $attribute, $currentFiles, $original) {
 
                 /**
                  * If the file already exists on the model, means user want to keep this file, therefore we skip it
                  */
-                if ($currentFiles->contains($file[ 'path' ])) {
+                if ($currentFiles->contains($file->path)) {
 
-                    $data = $original->firstWhere($attribute, $file[ 'path' ]);
+                    $data = $original->first(function (string|array $value) use ($file) {
+                        return $this->resolveFileValue($value) === $file->path;
+                    });
 
-                    $attribute = sprintf('%s->%s', $attribute, $index);
+                    if ($this->multiple) {
+                        $attribute = sprintf('%s->%s', $attribute, $index);
+                    }
 
                     $model->{$attribute} = $data;
 
@@ -156,15 +165,12 @@ class Filepond extends File
                 }
 
                 $clonedRequest = $request::createFromBase($request);
-                $clonedRequest->files->add([ $requestAttribute => $this->toUploadedFile($file[ 'path' ]) ]);
+                $clonedRequest->files->add([ $requestAttribute => $this->toUploadedFile($file->path) ]);
 
                 $fakeModel = new class() extends Model {
                 };
 
                 $callback = parent::fillAttribute($clonedRequest, $requestAttribute, $fakeModel, $attribute);
-
-                $modelAttribute = $attribute;
-                $data = $fakeModel->getAttributes();
 
                 if ($this->multiple) {
 
@@ -175,7 +181,8 @@ class Filepond extends File
                         $model->{$attribute} = [];
                     }
 
-                    $modelAttribute .= "->$index";
+                    $data = $fakeModel->getAttributes();
+                    $modelAttribute = sprintf('%s->%s', $attribute, $index);
 
                     /**
                      * if the user called ->store() and returned [ $attribute => string ] or string
@@ -185,20 +192,20 @@ class Filepond extends File
                         $data = $data[ $attribute ];
                     }
 
+                    $model->{$modelAttribute} = $data;
+
                 } else {
 
-                    $data = $data[ $attribute ];
+                    foreach ($fakeModel->getAttributes() as $key => $value) {
+                        $model->{$key} = $value;
+                    }
 
                 }
-
-                $model->{$modelAttribute} = $data;
 
                 /**
                  * Cleanup the temp directory
                  */
-                return function () use ($file) {
-                    Storage::disk(config('nova-filepond.temp_disk'))->deleteDirectory(dirname($file[ 'path' ]));
-                };
+                return fn () => $file->deleteDirectory();
 
             });
 
@@ -230,49 +237,51 @@ class Filepond extends File
 
     protected function resolveAttribute($resource, $attribute): Collection
     {
-        return collect(parent::resolveAttribute($resource, $attribute))->map(function (string|array $value) {
-            return $this->resolveEncryptedServerId($value);
-        });
-    }
+        $preview = $this->meta[ 'preview' ] ?? true;
 
-    private function resolveEncryptedServerId(string|array $value): string
-    {
-        return $this->getServerIdFromPath(
-            $this->resolveFileValue($value),
-            $this->resolveOriginalName($value),
-        );
-    }
+        $data = parent::resolveAttribute($resource, $attribute);
 
-    private function resolveFileValue(string|array $value): string
-    {
-        if (is_array($value)) {
-            $value = $value[ $this->attribute ];
+        if ($data === null) {
+            return collect();
         }
 
-        return $value;
-    }
+        if (!is_array($data)) {
 
-    private function resolveOriginalName(string|array $value): string
-    {
-        if (is_array($value)) {
-            $value = $value[ $this->originalNameColumn ];
+            $data = [
+                [
+                    $attribute => $data,
+                    $this->originalNameColumn => parent::resolveAttribute($resource, $this->originalNameColumn),
+                    $this->sizeColumn => parent::resolveAttribute($resource, $this->sizeColumn),
+                ],
+            ];
+
         }
 
-        return $value;
-    }
+        return collect($data)
+            ->when($preview === true, function (Collection $collection) {
 
-    public static function getServerIdFromPath(string $path, string $filename): string
-    {
-        return encrypt([
-            'path' => $path,
-            'filename' => $filename,
-            'disk' => config('nova-filepond.disk'),
-        ]);
-    }
+                return $collection->map(fn (string|array $value) => [
+                    'source' => $this->resolveEncryptedData($value),
+                    'options' => [
+                        'type' => 'local',
+                    ],
+                ]);
 
-    public static function getPathFromServerId(string $serverId): array
-    {
-        return decrypt($serverId);
+            })
+            ->when($preview === false, function (Collection $collection) {
+
+                return $collection->map(fn (string|array $value) => [
+                    'source' => $this->resolveEncryptedData($value),
+                    'options' => [
+                        'type' => 'local',
+                        'file' => [
+                            'name' => $this->resolveOriginalName($value),
+                            'size' => $this->resolveFileSize($value),
+                        ],
+                    ],
+                ]);
+
+            });
     }
 
     /**
@@ -285,6 +294,58 @@ class Filepond extends File
             'disk' => $this->getStorageDisk(),
             'labels' => $this->getLabels(),
         ]);
+    }
+
+    private function resolveEncryptedData(string|array $value): string
+    {
+        return Data::make(
+            path: $this->resolveFileValue($value),
+            filename: $this->resolveOriginalName($value),
+            disk: $this->getStorageDisk(),
+        )->encrypt();
+    }
+
+    private function resolveFileValue(string|array $value): string
+    {
+        if (is_array($value) && isset($value[ $this->attribute ])) {
+            return $value[ $this->attribute ];
+        }
+
+        if (is_string($value)) {
+            return $value;
+        }
+
+        throw new RuntimeException('Unable to resolve file value');
+    }
+
+    private function resolveOriginalName(string|array $value): string
+    {
+        if (is_array($value) && isset($value[ $this->originalNameColumn ])) {
+            return $value[ $this->originalNameColumn ];
+        }
+
+        if (is_string($value)) {
+            return $value;
+        }
+
+        return $value[ $this->attribute ];
+    }
+
+    private function resolveFileSize(string|array $value): int
+    {
+        if (is_array($value) && isset($value[ $this->sizeColumn ])) {
+            return (int) $value[ $this->sizeColumn ];
+        }
+
+        try {
+
+            return Storage::disk($this->getStorageDisk())->size($this->resolveFileValue($value));
+
+        } catch (Exception) {
+
+            return 0;
+
+        }
     }
 
     private function getLabels(): Collection

@@ -4,7 +4,7 @@ declare(strict_types = 1);
 
 namespace DigitalCreative\Filepond\Http\Controllers;
 
-use DigitalCreative\Filepond\Filepond;
+use DigitalCreative\Filepond\Data\Data;
 use Illuminate\Contracts\Container\BindingResolutionException;
 use Illuminate\Foundation\Validation\ValidatesRequests;
 use Illuminate\Routing\Controller as BaseController;
@@ -14,6 +14,7 @@ use Illuminate\Validation\ValidationException;
 use Laravel\Nova\Http\Requests\NovaRequest;
 use Laravel\Nova\Nova;
 use Symfony\Component\HttpFoundation\Response;
+use Throwable;
 
 class ProcessController extends BaseController
 {
@@ -55,6 +56,13 @@ class ProcessController extends BaseController
                 status: $exception->status,
             );
 
+        } catch (Throwable $exception) {
+
+            return response()->json(
+                data: [ $attribute => [ $exception->getMessage() ] ],
+                status: 500,
+            );
+
         }
 
         $fileName = $file->getClientOriginalName();
@@ -70,7 +78,7 @@ class ProcessController extends BaseController
         }
 
         return response()->make(
-            Filepond::getServerIdFromPath($path,$fileName ),
+            Data::make($path, $fileName, config('nova-filepond.temp_disk'))->encrypt(),
         );
     }
 }
