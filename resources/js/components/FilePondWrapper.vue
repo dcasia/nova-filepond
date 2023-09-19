@@ -1,7 +1,9 @@
 <template>
 
-    <FilePond
+    <component
         ref="instance"
+        :is="component"
+        :id="`filepond-${ field.attribute }`"
         :style="cssVars"
         :name="field.attribute"
         :image-preview-height="field.multiple ? 150 : null"
@@ -32,7 +34,7 @@
 
 </template>
 
-<script setup>
+<script>
 
     import { ref } from 'vue'
     import vueFilePond from 'vue-filepond'
@@ -48,53 +50,60 @@
     import 'filepond-plugin-media-preview/dist/filepond-plugin-media-preview.css'
     import 'filepond-plugin-get-file/dist/filepond-plugin-get-file.min.css'
 
-    const plugins = [
-        FilePondPluginImageExifOrientation,
-        FilePondPluginFileValidateType,
-        FilePondPluginFileValidateSize,
-    ]
+    export default {
+        props: [ 'field', 'resourceName', 'onChange', 'errors', 'columns', 'limit', 'allowReorder', 'allowRemove' ],
+        setup(props) {
 
-    const props = defineProps([ 'field', 'resourceName', 'onChange', 'errors', 'columns', 'limit', 'allowReorder', 'allowRemove' ])
-    const isPreviewEnabled = props.field.preview === undefined ? true : props.field.preview
+            const plugins = [
+                FilePondPluginImageExifOrientation,
+                FilePondPluginFileValidateType,
+                FilePondPluginFileValidateSize,
+                FilePondPluginImagePreview,
+                FilePondPluginMediaPreview,
+            ]
 
-    if (props.field.downloadable && isPreviewEnabled) {
-        plugins.push(FilePondPluginGetFile)
-    }
+            const isPreviewEnabled = props.field.preview === undefined ? true : props.field.preview
 
-    if (isPreviewEnabled) {
-        plugins.push(FilePondPluginImagePreview, FilePondPluginMediaPreview)
-    }
-
-    const FilePond = vueFilePond(...plugins)
-    const instance = ref()
-
-    defineExpose({ instance })
-
-    const files = [ ...props.field.value ]
-    const cssVars = {
-        '--filepond-column': (100 / (props.columns || props.field.columns)) + '%',
-        '--filepond-max-height': props.field.maxHeight
-    }
-
-    const serverOptions = {
-        url: '/nova-vendor/nova-filepond',
-        revert: '/revert',
-        load: `/load/?serverId=`,
-        process: {
-            url: '/process',
-            ondata: formData => {
-                formData.append('attribute', props.field.attribute)
-                formData.append('resourceName', props.resourceName)
-
-                return formData
-            },
-            onerror: errors => {
-                props.errors.record(JSON.parse(errors))
+            if (props.field.downloadable && isPreviewEnabled) {
+                plugins.push(FilePondPluginGetFile)
             }
+
+            const component = vueFilePond(...plugins)
+
+            return {
+                component,
+                isPreviewEnabled,
+                instance: ref(),
+                nameField: props.field.attribute,
+                files: [ ...props.field.value ],
+                cssVars: {
+                    '--filepond-column': (100 / (props.columns || props.field.columns)) + '%',
+                    '--filepond-max-height': props.field.maxHeight
+                },
+                serverOptions: {
+                    url: '/nova-vendor/nova-filepond',
+                    revert: '/revert',
+                    load: `/load/?serverId=`,
+                    process: {
+                        url: '/process',
+                        ondata: formData => {
+                            formData.append('attribute', props.field.attribute)
+                            formData.append('resourceName', props.resourceName)
+
+                            return formData
+                        },
+                        onerror: errors => {
+                            props.errors.record(JSON.parse(errors))
+                        }
+                    },
+                    headers: {
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+                    }
+                }
+            }
+
         },
-        headers: {
-            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
-        }
+
     }
 
 </script>

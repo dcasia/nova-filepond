@@ -284,15 +284,14 @@ class Filepond extends File
             });
     }
 
-    /**
-     * Prepare the field for JSON serialization.
-     */
     public function jsonSerialize(): array
     {
         return array_merge(parent::jsonSerialize(), [
             'multiple' => $this->multiple,
             'disk' => $this->getStorageDisk(),
             'labels' => $this->getLabels(),
+            'isFormView' => resolve(NovaRequest::class)->isFormRequest(),
+            'isDetailView' => resolve(NovaRequest::class)->isResourceDetailRequest(),
         ]);
     }
 
