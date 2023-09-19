@@ -4,7 +4,6 @@ declare(strict_types = 1);
 
 return [
 
-    'disk' => config('nova.storage_disk', 'public'),
     'temp_disk' => 'local',
     'temp_path' => 'nova-filepond/temp',
 
