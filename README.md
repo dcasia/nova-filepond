@@ -5,8 +5,8 @@
 [![License](https://img.shields.io/packagist/l/digital-creative/nova-filepond)](https://github.com/dcasia/nova-filepond/blob/master/LICENSE)
 
 <picture>
-  <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/dcasia/nova-filepond/main/screenshots/dark.png">
-  <img alt="Laravel Nova Filepond in action" src="https://raw.githubusercontent.com/dcasia/nova-filepond/main/screenshots/light.png">
+  <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/dcasia/nova-filepond/nova-4/screenshots/dark.png">
+  <img alt="Laravel Nova Filepond in action" src="https://raw.githubusercontent.com/dcasia/nova-filepond/nova-4/screenshots/light.png">
 </picture>
 
 A Nova field for uploading File, Image and Video using [Filepond](https://github.com/pqina/filepond).
@@ -100,10 +100,7 @@ class Post extends Resource
     }
 }
 ```
-
-Note when using `storeOriginalName` and `storeSize` methods, you will need to add the columns to your database table if you are in "single" file mode.
-
-```php
+> Note when using `storeOriginalName` and `storeSize` methods, you will need to add the columns to your database table if you are in "single" file mode.
 
 ## License
 
