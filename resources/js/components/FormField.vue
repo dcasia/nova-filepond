@@ -1,92 +1,80 @@
 <template>
 
-    <default-field :field="field" :errors="errors" :full-width-content="field.fullWidth">
+    <DefaultField
+        :field="field"
+        :errors="errors"
+        :show-help-text="showHelpText"
+        :full-width-content="fullWidthContent">
 
-        <template slot="field">
+        <template #field>
 
-            <file-pond-wrapper
-                :ref="`${field.attribute}Filepond`"
+            <FilePondWrapper
+                ref="instance"
                 :field="field"
+                :resourceName="resourceName"
                 :errors="errors"
-                :onprocessfile="updateFiles"
-                :onremovefile="updateFiles"/>
+                :onChange="updateFiles"/>
 
         </template>
 
-    </default-field>
+    </DefaultField>
 
 </template>
 
 <script>
 
-    import {FormField, HandlesValidationErrors} from 'laravel-nova'
+    import { ref } from 'vue'
+    import { FormField, HandlesValidationErrors } from 'laravel-nova'
     import FilePondWrapper from './FilePondWrapper'
 
     export default {
-        components: {FilePondWrapper},
+        components: { FilePondWrapper },
+        mixins: [ FormField, HandlesValidationErrors ],
+        props: {
+            resourceName: String,
+            resourceId: String,
+            field: Object,
+        },
+        setup(props) {
 
-        mixins: [FormField, HandlesValidationErrors],
+            const instance = ref()
+            const files = ref([])
 
-        props: ['resourceName', 'resourceId', 'field'],
+            function fill(formData) {
 
-        computed: {
+                for (const file of files.value) {
+                    formData.append(`${ props.field.attribute }[]`, file)
+                }
 
-            filepondInstance() {
+            }
 
-                return this.$refs[`${this.field.attribute}Filepond`].instance
+            function setInitialValue() {
+                files.value = props.field.value
+            }
 
+            function updateFiles() {
+                files.value = getActiveFiles()
+            }
+
+            function getActiveFiles() {
+
+                /**
+                 * https://pqina.nl/filepond/docs/patterns/api/filepond-object/#filestatus-enum
+                 */
+                return instance.value.instance.getFiles()
+                    .filter(file => file.status === 2 || file.status === 5)
+                    .map(file => file.serverId)
+
+            }
+
+            return {
+                fill,
+                instance,
+                updateFiles,
+                setInitialValue
             }
 
         },
-
-        methods: {
-
-            getActiveFiles() {
-
-                return this.filepondInstance.getFiles()
-                    .filter(file => {
-                        // https://pqina.nl/filepond/docs/patterns/api/filepond-object/#filestatus-enum
-                        return file.status === 2 || file.status === 5
-                    })
-                    .map(file => file.serverId)
-                    .join(',')
-
-            },
-
-            updateFiles() {
-
-                this.value = this.getActiveFiles()
-
-            },
-
-            /*
-             * Set the initial, internal value for the field.
-             */
-            setInitialValue() {
-
-                this.value = this.getActiveFiles()
-
-            },
-
-            /**
-             * Fill the given FormData object with the field's internal value.
-             */
-            fill(formData) {
-
-                if (this.value.length) {
-
-                    formData.append(this.field.attribute, this.value)
-
-                }
-
-            },
-
-            /**
-             * Update the field's internal value.
-             */
-            handleChange(value) {
-                this.value = value
-            }
-        }
     }
+
 </script>

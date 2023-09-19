@@ -1,15 +1,19 @@
 <template>
 
-    <panel-item :field="field">
+    <PanelItem :index="index" :field="field">
 
-        <file-pond-wrapper
-            slot="value"
-            :disabled="true"
-            :allow-image-preview="!field.multiple"
-            :limit="field.value.length"
-            :field="field"/>
+        <template #value>
 
-    </panel-item>
+            <FilePondWrapper
+                :disabled="true"
+                :allow-reorder="false"
+                :allow-remove="false"
+                :limit="field.value.length"
+                :field="field"/>
+
+        </template>
+
+    </PanelItem>
 
 </template>
 
@@ -18,8 +22,8 @@
     import FilePondWrapper from './FilePondWrapper'
 
     export default {
-        components: {FilePondWrapper},
-        props: ['resource', 'resourceName', 'resourceId', 'field']
+        components: { FilePondWrapper },
+        props: [ 'index', 'resource', 'resourceName', 'resourceId', 'field' ],
     }
 
 </script>

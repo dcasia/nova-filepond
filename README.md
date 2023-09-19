@@ -4,7 +4,10 @@
 [![Total Downloads](https://img.shields.io/packagist/dt/digital-creative/nova-filepond)](https://packagist.org/packages/digital-creative/nova-filepond)
 [![License](https://img.shields.io/packagist/l/digital-creative/nova-filepond)](https://github.com/dcasia/nova-filepond/blob/master/LICENSE)
 
-![Laravel Nova Filepond in action](https://raw.githubusercontent.com/dcasia/nova-filepond/master/screenshots/demo-1.gif)
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/dcasia/nova-filepond/main/screenshots/dark.png">
+  <img alt="Laravel Nova Filepond in action" src="https://raw.githubusercontent.com/dcasia/nova-filepond/main/screenshots/light.png">
+</picture>
 
 A Nova field for uploading File, Image and Video using [Filepond](https://github.com/pqina/filepond).
 
@@ -12,33 +15,44 @@ A Nova field for uploading File, Image and Video using [Filepond](https://github
 
 You can install the package via composer:
 
-```
+```shell
 composer require digital-creative/nova-filepond
 ```
 
+# Features
+
+- Single/Multiple files upload
+- Sortable files
+- Preview images, videos and audio
+- Enable / Disable preview
+- Extends the original Laravel Nova File field giving you access to all the methods/functionality of the default file upload.
+- Drag and drop files
+- Paste files directly from the clipboard
+- Store custom attributes (original file name, size, etc)
+- Prunable files (Auto delete files when the model is deleted)
+- Dark mode support
+
 # Usage
+
+The field extends the original Laravel Nova File field, so you can use all the methods available in the original field.
+
+Basic usage:
 
 ```php
 use DigitalCreative\Filepond\Filepond;
 
 class Post extends Resource
 {
-    public function fields(Request $request)
+    public function fields(NovaRequest $request): array
     {
         return [
-            // ...
-            Filepond::make('Audio Example')
-                    ->multiple() // the default is single upload, use this method to allow multiple uploads
-                    ->limit(4) // limit the number of attached files
-                    ->rules('required') // every validation rule works!!
-                    ->mimesTypes([ 'audio/mp3', 'audio/ogg', 'audio/vnd.wav' ]) // if opmited, accepts anything
-                    ->disk('public', '/optional/location') // the second argument instruct the file to be stored into a subfolder
-                    ->storeAs(function (Illuminate\Http\File $file) { // this is optional, use in case you need generate custom file names
-                        return Str::random(20) . '.' . $file->getExtension();
-                    })
-
+            Filepond::make('Images', 'images')
+                ->rules('required')
+                ->prunable()
+                ->disablePreview()
+                ->multiple() 
+                ->limit(4),
         ];
-
     }
 }
 ```
@@ -47,12 +61,7 @@ When uploading multiple files you will need to cast the attribute to an array in
 
 ```php
 class Post extends Model {
-    
-    /**
-     * The attributes that should be cast to native types.
-     *
-     * @var array
-     */
+ 
     protected $casts = [
         'images' => 'array'
     ];
@@ -60,55 +69,38 @@ class Post extends Model {
 }
 ```
 
-
-# Adding an Image Editor
-
-To enable image editing for your users you have to add the [Doka Image Editor](https://pqina.nl/doka/?ref=nova-filepond).
-
-1. Get a license for the editor and download the Doka library files.
-
-2. Publish the configuration file:
-
-```bash
-php artisan vendor:publish --provider="DigitalCreative\Filepond\FilepondServiceProvider" --tag="config"
-```
-
-3. Set `doka.enabled` to `true` and update the path to the `doka.min.js` and `doka.min.css` library files.
+You can also store original file name / size by using `storeOriginalName` and `storeOriginalSize` methods.
 
 ```php
-'doka' => [
-    'enabled' => true,
-    'js_path' => public_path('doka.min.js'), // this assumes you places theses files within your public directory
-    'css_path' => public_path('doka.min.css'),
-]
-```
+use DigitalCreative\Filepond\Filepond;
 
-4. Two options are available to enable/disable Doka on a given field, `->withDoka($options)` accepts a list of options, 
-you can find the documentation of all possible options here: https://pqina.nl/doka/docs/patterns/api/doka-instance/#properties
-
-```php
-public function fields(Request $request)
+class Post extends Resource
 {
-    return [
-        //...
-
-        Filepond::make('Avatar')->withDoka([
-            'cropShowSize' => true
-        ]),
-        
-        /**
-         * This will disable Doka for this specific field
-         */
-        Filepond::make('Simple Image')->withoutDoka(),
-
-    ];
+    public function fields(NovaRequest $request): array
+    {
+        return [
+            Filepond::make('Images', 'images')
+                ->storeOriginalName('name')
+                ->storeSize('size')
+                ->multiple(),
+            
+            // or you can manually decide how to store the data
+            // Note: the store method will be called for each file uploaded and the output will be stored into a single json column
+            Filepond::make('Images', 'images')
+                ->multiple()
+                ->store(function (NovaRequest $request, Model $model, string $attribute): array {
+                    return [
+                        $attribute => $request->images->store('/', 's3'),
+                        'name' => $request->images->getClientOriginalName(),
+                        'size' => $request->images->getSize(),
+                        'metadata' => '...'
+                    ];
+                })
+        ];
+    }
 }
 ```
-
-If you've setup everything correctly you should see the edit icon on top of FilePond images.
-
-![Laravel Nova Filepond with Doka in action](https://raw.githubusercontent.com/dcasia/nova-filepond/master/screenshots/demo-2.png)
-
+> Note when using `storeOriginalName` and `storeSize` methods, you will need to add the columns to your database table if you are in "single" file mode.
 
 ## License
 

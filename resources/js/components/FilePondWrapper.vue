@@ -1,135 +1,198 @@
 <template>
 
-    <file-pond
-            v-bind="{ ...$attrs, ...field.labels }"
-            ref="filepond"
-            :style="cssVars"
-            :name="nameField"
-            :image-preview-height="field.multiple ? 150 : null"
-            :allow-multiple="field.multiple"
-            :accepted-file-types="field.mimesTypes"
-            :instant-upload="true"
-            :max-files="limit || field.limit"
-            :server="serverOptions"
-            :allow-image-edit="field.dokaEnabled"
-            :image-edit-editor="editorInstance"
-            :image-edit-instant-edit="true"
-            :disabled="field.disabled"
-            :allow-paste="false"
-            :files="files"/>
+    <FilePond
+        ref="instance"
+        :style="cssVars"
+        :name="nameField"
+        :image-preview-height="field.multiple ? 150 : null"
+        :image-edit-instant-edit="true"
+        :accepted-file-types="field.mimesTypes"
+        :instant-upload="true"
+        :check-validity="true"
+        :max-files="limit || field.limit"
+        :server="serverOptions"
+        :files="files"
+        :disabled="field.disabled"
+        :allow-multiple="field.multiple"
+        :allow-reorder="allowReorder === undefined ? field.allowReorder : allowReorder"
+        :allow-paste="field.allowPaste"
+        :allow-drop="field.allowDrop"
+        :allow-browse="field.allowBrowse"
+        :allow-remove="allowRemove === undefined ? field.deletable : allowRemove"
+        :allow-image-preview="field.preview === undefined ? true : field.preview"
+        :allow-video-preview="field.preview === undefined ? true : field.preview"
+        :allow-audio-preview="field.preview === undefined ? true : field.preview"
+        :credits="field.credits"
+        v-bind="field.labels"
+        @updatefiles="onChange"
+        @reorderfiles="onChange"
+        @processfile="onChange"
+        @removefile="onChange"
+    />
 
 </template>
 
 <script>
 
+    import { ref } from 'vue'
     import vueFilePond from 'vue-filepond'
     import FilePondPluginFileValidateType from 'filepond-plugin-file-validate-type'
     import FilePondPluginImagePreview from 'filepond-plugin-image-preview'
     import FilePondPluginMediaPreview from 'filepond-plugin-media-preview'
-    import FilePondPluginImageOverlay from 'filepond-plugin-image-overlay'
     import FilePondPluginImageExifOrientation from 'filepond-plugin-image-exif-orientation'
+    import FilePondPluginFileValidateSize from 'filepond-plugin-file-validate-size'
 
     import 'filepond/dist/filepond.min.css'
     import 'filepond-plugin-image-preview/dist/filepond-plugin-image-preview.min.css'
     import 'filepond-plugin-media-preview/dist/filepond-plugin-media-preview.css'
-    import 'filepond-plugin-image-overlay/dist/filepond-plugin-image-overlay.css'
-    import 'filepond-plugin-image-edit/dist/filepond-plugin-image-edit.min.css'
-
-    import FilePondPluginImageEdit from 'filepond-plugin-image-edit'
-    import FilePondPluginImageCrop from 'filepond-plugin-image-crop'
-    import FilePondPluginImageResize from 'filepond-plugin-image-resize'
-    import FilePondPluginImageTransform from 'filepond-plugin-image-transform'
 
     const FilePond = vueFilePond(
         FilePondPluginImageExifOrientation,
         FilePondPluginFileValidateType,
+        FilePondPluginFileValidateSize,
         FilePondPluginImagePreview,
-        FilePondPluginImageOverlay,
         FilePondPluginMediaPreview,
-        FilePondPluginImageEdit,
-        FilePondPluginImageCrop,
-        FilePondPluginImageResize,
-        FilePondPluginImageTransform
     )
 
     export default {
-        inheritAttrs: false,
-        components: {FilePond},
-        props: ['field', 'errors', 'columns', 'limit'],
-        data() {
-
-            let editorInstance = null
-
-            if (this.field.dokaEnabled) {
-
-                if (typeof Doka !== 'object') {
-
-                    console.log('Doka not found!, please read the documentation: https://github.com/dcasia/nova-filepond')
-
-                } else {
-
-                    if (this.field.dokaOptions.cropMask) {
-
-                        this.field.dokaOptions.cropMask = eval(this.field.dokaOptions.cropMask)
-
-                    }
-
-                    editorInstance = Doka.create(this.field.dokaOptions || {})
-
-                }
-
-            }
+        components: { FilePond },
+        props: [ 'field', 'resourceName', 'onChange', 'errors', 'columns', 'limit', 'allowReorder', 'allowRemove' ],
+        setup(props) {
 
             return {
-                editorInstance: editorInstance,
-                files: [...this.field.value],
-                nameField: `__${this.field.attribute}`,
+                instance: ref(),
+                nameField: props.field.attribute,
+                files: [ ...props.field.value ],
+                cssVars: {
+                    '--filepond-column': (100 / (props.columns || props.field.columns)) + '%',
+                    '--filepond-max-height': props.field.maxHeight
+                },
                 serverOptions: {
                     url: '/nova-vendor/nova-filepond',
                     revert: '/revert',
-                    load: `/load/?disk=${this.field.disk}&serverId=`,
+                    load: `/load/?serverId=`,
                     process: {
                         url: '/process',
                         ondata: formData => {
-                            formData.append('attribute', this.field.attribute)
-                            formData.append('resourceName', this.$route.params.resourceName)
+                            formData.append('attribute', props.field.attribute)
+                            formData.append('resourceName', props.resourceName)
+
                             return formData
                         },
-                        onerror: data => {
-                            this.errors.record(JSON.parse(data).errors)
+                        onerror: errors => {
+                            props.errors.record(JSON.parse(errors))
                         }
                     },
                     headers: {
-                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
                     }
                 }
             }
 
         },
-        computed: {
-            instance() {
-                return this.$refs.filepond
-            },
-            cssVars() {
-                return {
-                    '--filepond-column': (100 / (this.columns || this.field.columns)) + '%',
-                    '--filepond-max-height': this.field.maxHeight
-                }
-            }
-        }
+
     }
+
 </script>
 
-<style>
+<style lang="scss">
 
     :root {
         --filepond-column: 100%;
         --filepond-max-height: auto;
     }
 
+    .dark {
+
+        .filepond--drop-label {
+            color: rgba(var(--colors-gray-400));
+        }
+
+        .filepond--panel-root {
+            background-color: rgba(var(--colors-gray-900));
+            border-color: rgba(var(--colors-gray-700));
+        }
+
+        .filepond--image-preview-wrapper {
+            border-color: rgba(var(--colors-gray-700));
+        }
+
+        .filepond--image-preview {
+            background-color: rgba(var(--colors-gray-800));
+        }
+
+        .filepond--list-scroller::-webkit-scrollbar-thumb {
+            background-color: rgba(var(--colors-gray-700));
+        }
+
+        .filepond--image-preview-overlay {
+            color: rgba(var(--colors-gray-400))
+        }
+
+        .filepond--item-panel {
+            background: rgba(var(--colors-gray-800));
+        }
+
+    }
+
+    [data-filepond-item-state*='error'] .filepond--item-panel,
+    [data-filepond-item-state*='invalid'] .filepond--item-panel {
+        background-color: rgba(var(--colors-red-500));
+    }
+
+    [data-filepond-item-state='processing-complete'] .filepond--item-panel {
+        background-color: rgba(var(--colors-green-500));
+    }
+
+    .filepond--file-wrapper {
+        background: transparent;
+    }
+
+    .filepond--item-panel {
+        background: rgba(var(--colors-gray-400));
+    }
+
+    .filepond--image-preview-overlay {
+
+        &.filepond--image-preview-overlay-idle {
+            color: rgba(var(--colors-gray-500));
+        }
+
+        &.filepond--image-preview-overlay-success {
+            color: rgba(var(--colors-green-500));
+        }
+
+        &.filepond--image-preview-overlay-failure {
+            color: rgba(var(--colors-red-500));
+        }
+    }
+
+    .filepond--image-preview {
+        background-color: rgba(var(--colors-gray-100));
+    }
+
+    .filepond--image-preview-wrapper {
+        border-color: rgba(var(--colors-gray-300));
+    }
+
+    .filepond--drop-label {
+        color: rgba(var(--colors-gray-600))
+    }
+
     .filepond--root {
-        transition: all 250ms;
         max-height: var(--filepond-max-height);
+    }
+
+    .filepond--panel-root {
+        border-radius: .25rem;
+        border-width: 1px;
+        border-color: rgba(var(--colors-gray-300));
+        background-color: rgba(var(--colors-gray-100));
+    }
+
+    .filepond--image-preview-wrapper {
+        border-radius: .25rem;
+        border-width: 1px;
     }
 
     .filepond--fullsize-overlay {
