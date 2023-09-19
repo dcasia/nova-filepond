@@ -3,7 +3,7 @@
     <FilePond
         ref="instance"
         :style="cssVars"
-        :name="nameField"
+        :name="field.attribute"
         :image-preview-height="field.multiple ? 150 : null"
         :image-edit-instant-edit="true"
         :accepted-file-types="field.mimesTypes"
@@ -19,9 +19,9 @@
         :allow-drop="field.allowDrop"
         :allow-browse="field.allowBrowse"
         :allow-remove="allowRemove === undefined ? field.deletable : allowRemove"
-        :allow-image-preview="field.preview === undefined ? true : field.preview"
-        :allow-video-preview="field.preview === undefined ? true : field.preview"
-        :allow-audio-preview="field.preview === undefined ? true : field.preview"
+        :allow-image-preview="isPreviewEnabled"
+        :allow-video-preview="isPreviewEnabled"
+        :allow-audio-preview="isPreviewEnabled"
         :credits="field.credits"
         v-bind="field.labels"
         @updatefiles="onChange"
@@ -32,7 +32,7 @@
 
 </template>
 
-<script>
+<script setup>
 
     import { ref } from 'vue'
     import vueFilePond from 'vue-filepond'
@@ -41,56 +41,60 @@
     import FilePondPluginMediaPreview from 'filepond-plugin-media-preview'
     import FilePondPluginImageExifOrientation from 'filepond-plugin-image-exif-orientation'
     import FilePondPluginFileValidateSize from 'filepond-plugin-file-validate-size'
+    import FilePondPluginGetFile from 'filepond-plugin-get-file'
 
     import 'filepond/dist/filepond.min.css'
     import 'filepond-plugin-image-preview/dist/filepond-plugin-image-preview.min.css'
     import 'filepond-plugin-media-preview/dist/filepond-plugin-media-preview.css'
+    import 'filepond-plugin-get-file/dist/filepond-plugin-get-file.min.css'
 
-    const FilePond = vueFilePond(
+    const plugins = [
         FilePondPluginImageExifOrientation,
         FilePondPluginFileValidateType,
         FilePondPluginFileValidateSize,
-        FilePondPluginImagePreview,
-        FilePondPluginMediaPreview,
-    )
+    ]
 
-    export default {
-        components: { FilePond },
-        props: [ 'field', 'resourceName', 'onChange', 'errors', 'columns', 'limit', 'allowReorder', 'allowRemove' ],
-        setup(props) {
+    const props = defineProps([ 'field', 'resourceName', 'onChange', 'errors', 'columns', 'limit', 'allowReorder', 'allowRemove' ])
+    const isPreviewEnabled = props.field.preview === undefined ? true : props.field.preview
 
-            return {
-                instance: ref(),
-                nameField: props.field.attribute,
-                files: [ ...props.field.value ],
-                cssVars: {
-                    '--filepond-column': (100 / (props.columns || props.field.columns)) + '%',
-                    '--filepond-max-height': props.field.maxHeight
-                },
-                serverOptions: {
-                    url: '/nova-vendor/nova-filepond',
-                    revert: '/revert',
-                    load: `/load/?serverId=`,
-                    process: {
-                        url: '/process',
-                        ondata: formData => {
-                            formData.append('attribute', props.field.attribute)
-                            formData.append('resourceName', props.resourceName)
+    if (props.field.downloadable && isPreviewEnabled) {
+        plugins.push(FilePondPluginGetFile)
+    }
 
-                            return formData
-                        },
-                        onerror: errors => {
-                            props.errors.record(JSON.parse(errors))
-                        }
-                    },
-                    headers: {
-                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
-                    }
-                }
+    if (isPreviewEnabled) {
+        plugins.push(FilePondPluginImagePreview, FilePondPluginMediaPreview)
+    }
+
+    const FilePond = vueFilePond(...plugins)
+    const instance = ref()
+
+    defineExpose({ instance })
+
+    const files = [ ...props.field.value ]
+    const cssVars = {
+        '--filepond-column': (100 / (props.columns || props.field.columns)) + '%',
+        '--filepond-max-height': props.field.maxHeight
+    }
+
+    const serverOptions = {
+        url: '/nova-vendor/nova-filepond',
+        revert: '/revert',
+        load: `/load/?serverId=`,
+        process: {
+            url: '/process',
+            ondata: formData => {
+                formData.append('attribute', props.field.attribute)
+                formData.append('resourceName', props.resourceName)
+
+                return formData
+            },
+            onerror: errors => {
+                props.errors.record(JSON.parse(errors))
             }
-
         },
-
+        headers: {
+            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+        }
     }
 
 </script>
