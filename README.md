@@ -5,8 +5,8 @@
 [![License](https://img.shields.io/packagist/l/digital-creative/nova-filepond)](https://github.com/dcasia/nova-filepond/blob/master/LICENSE)
 
 <picture>
-  <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/dcasia/nova-filepond/nova-4/screenshots/dark.png">
-  <img alt="Laravel Nova Filepond in action" src="https://raw.githubusercontent.com/dcasia/nova-filepond/nova-4/screenshots/light.png">
+  <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/dcasia/nova-filepond/main/screenshots/dark.png">
+  <img alt="Laravel Nova Filepond in action" src="https://raw.githubusercontent.com/dcasia/nova-filepond/main/screenshots/light.png">
 </picture>
 
 A Nova field for uploading File, Image and Video using [Filepond](https://github.com/pqina/filepond).
@@ -15,7 +15,7 @@ A Nova field for uploading File, Image and Video using [Filepond](https://github
 
 You can install the package via composer:
 
-```
+```shell
 composer require digital-creative/nova-filepond
 ```
 
