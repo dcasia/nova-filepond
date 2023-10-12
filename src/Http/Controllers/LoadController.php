@@ -5,20 +5,16 @@ declare(strict_types = 1);
 namespace DigitalCreative\Filepond\Http\Controllers;
 
 use DigitalCreative\Filepond\Data\Data;
+use Illuminate\Support\Facades\Storage;
 use Laravel\Nova\Http\Requests\NovaRequest;
-use Symfony\Component\HttpFoundation\BinaryFileResponse;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class LoadController
 {
-    public function __invoke(NovaRequest $request): BinaryFileResponse
+    public function __invoke(NovaRequest $request): StreamedResponse
     {
         $data = Data::fromEncrypted($request->input('serverId'));
 
-        return response()->file(
-            file: $data->absolutePath(),
-            headers: [
-                'Content-Disposition' => sprintf('inline; filename="%s"', basename($data->filename)),
-            ],
-        );
+        return Storage::disk($data->disk)->response($data->path);
     }
 }
