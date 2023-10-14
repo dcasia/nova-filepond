@@ -353,7 +353,7 @@ class Filepond extends File
         return collect(config('nova-filepond.labels', []))
             ->merge($this->meta[ 'labels' ] ?? [])
             ->mapWithKeys(fn (string $label, string $key) => [
-                sprintf('label%s', Str::title($key)) => Nova::__($label),
+                Str::of($key)->prepend('label_')->camel()->value() => Nova::__($label),
             ]);
     }
 
