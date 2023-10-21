@@ -1,9 +1,11 @@
 <template>
 
-    <FilePond
+    <component
         ref="instance"
+        :is="component"
+        :id="`filepond-${ field.attribute }`"
         :style="cssVars"
-        :name="nameField"
+        :name="field.attribute"
         :image-preview-height="field.multiple ? 150 : null"
         :image-edit-instant-edit="true"
         :accepted-file-types="field.mimesTypes"
@@ -19,9 +21,9 @@
         :allow-drop="field.allowDrop"
         :allow-browse="field.allowBrowse"
         :allow-remove="allowRemove === undefined ? field.deletable : allowRemove"
-        :allow-image-preview="field.preview === undefined ? true : field.preview"
-        :allow-video-preview="field.preview === undefined ? true : field.preview"
-        :allow-audio-preview="field.preview === undefined ? true : field.preview"
+        :allow-image-preview="isPreviewEnabled"
+        :allow-video-preview="isPreviewEnabled"
+        :allow-audio-preview="isPreviewEnabled"
         :credits="field.credits"
         v-bind="field.labels"
         @updatefiles="onChange"
@@ -41,25 +43,36 @@
     import FilePondPluginMediaPreview from 'filepond-plugin-media-preview'
     import FilePondPluginImageExifOrientation from 'filepond-plugin-image-exif-orientation'
     import FilePondPluginFileValidateSize from 'filepond-plugin-file-validate-size'
+    import FilePondPluginGetFile from 'filepond-plugin-get-file'
 
     import 'filepond/dist/filepond.min.css'
     import 'filepond-plugin-image-preview/dist/filepond-plugin-image-preview.min.css'
     import 'filepond-plugin-media-preview/dist/filepond-plugin-media-preview.css'
-
-    const FilePond = vueFilePond(
-        FilePondPluginImageExifOrientation,
-        FilePondPluginFileValidateType,
-        FilePondPluginFileValidateSize,
-        FilePondPluginImagePreview,
-        FilePondPluginMediaPreview,
-    )
+    import 'filepond-plugin-get-file/dist/filepond-plugin-get-file.min.css'
 
     export default {
-        components: { FilePond },
         props: [ 'field', 'resourceName', 'onChange', 'errors', 'columns', 'limit', 'allowReorder', 'allowRemove' ],
         setup(props) {
 
+            const plugins = [
+                FilePondPluginImageExifOrientation,
+                FilePondPluginFileValidateType,
+                FilePondPluginFileValidateSize,
+                FilePondPluginImagePreview,
+                FilePondPluginMediaPreview,
+            ]
+
+            const isPreviewEnabled = props.field.preview === undefined ? true : props.field.preview
+
+            if (props.field.downloadable && isPreviewEnabled) {
+                plugins.push(FilePondPluginGetFile)
+            }
+
+            const component = vueFilePond(...plugins)
+
             return {
+                component,
+                isPreviewEnabled,
                 instance: ref(),
                 nameField: props.field.attribute,
                 files: [ ...props.field.value ],
