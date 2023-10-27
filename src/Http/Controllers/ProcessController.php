@@ -11,6 +11,7 @@ use Illuminate\Routing\Controller as BaseController;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
+use Laravel\Nova\Actions\Action;
 use Laravel\Nova\Fields\FieldCollection;
 use Laravel\Nova\Http\Requests\NovaRequest;
 use Laravel\Nova\Nova;
@@ -28,7 +29,7 @@ class ProcessController extends BaseController
     {
         $attribute = $request->input('attribute');
         $resourceName = $request->input('resourceName');
-        $action = $request->input('action');
+        $actionUriKey = $request->input('action');
         $file = $request->file($attribute);
 
         if (!$file->isValid()) {
@@ -45,9 +46,9 @@ class ProcessController extends BaseController
             $resource = Nova::resourceInstanceForKey($resourceName);
 
             $fields = match (true) {
-                !is_null($action) => new FieldCollection($resource
+                !is_null($actionUriKey) => new FieldCollection($resource
                     ->availableActions($request)
-                    ->firstWhere('uriKey', $action)
+                    ->first(fn (Action $action) => $action->uriKey() === $actionUriKey)
                     ->fields($request)),
                 default => $resource->creationFields($request),
             };
