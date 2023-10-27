@@ -46,10 +46,12 @@ class ProcessController extends BaseController
             $resource = Nova::resourceInstanceForKey($resourceName);
 
             $fields = match (true) {
-                !is_null($actionUriKey) => new FieldCollection($resource
-                    ->availableActions($request)
-                    ->first(fn (Action $action) => $action->uriKey() === $actionUriKey)
-                    ->fields($request)),
+                !is_null($actionUriKey) => new FieldCollection(
+                    items: $resource
+                        ->availableActions($request)
+                        ->first(fn (Action $action) => $action->uriKey() === $actionUriKey)
+                        ->fields($request),
+                ),
                 default => $resource->creationFields($request),
             };
 
