@@ -35,6 +35,7 @@
 <script>
 
     import { ref } from 'vue'
+    import cloneDeep from 'lodash/cloneDeep'
     import vueFilePond from 'vue-filepond'
     import FilePondPluginFileValidateType from 'filepond-plugin-file-validate-type'
     import FilePondPluginImagePreview from 'filepond-plugin-image-preview'
@@ -62,7 +63,7 @@
             return {
                 instance: ref(),
                 nameField: props.field.attribute,
-                files: [ ...props.field.value ],
+                files: cloneDeep(props.field.value),
                 cssVars: {
                     '--filepond-column': (100 / (props.columns || props.field.columns)) + '%',
                     '--filepond-max-height': props.field.maxHeight,
