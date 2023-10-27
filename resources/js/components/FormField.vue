@@ -9,6 +9,8 @@
         <template #field>
 
             <FilePondWrapper
+                :mode="mode"
+                :action="action"
                 ref="instance"
                 :field="field"
                 :resourceName="resourceName"
@@ -23,7 +25,7 @@
 
 <script>
 
-    import { ref } from 'vue'
+    import { ref, computed } from 'vue'
     import { FormField, HandlesValidationErrors } from 'laravel-nova'
     import FilePondWrapper from './FilePondWrapper'
 
@@ -35,10 +37,26 @@
             resourceId: String,
             field: Object,
         },
-        setup(props) {
+        setup(props, context) {
 
             const instance = ref()
             const files = ref([])
+            const action = computed(() => {
+
+                try {
+
+                    const attributes = new URLSearchParams(context.attrs[ 'sync-endpoint' ].split('?')[ 1 ])
+                    const { action } = Object.fromEntries(attributes.entries())
+
+                    return action
+
+                } catch {
+
+                    return null
+
+                }
+
+            })
 
             function fill(formData) {
 
@@ -69,9 +87,10 @@
 
             return {
                 fill,
+                action,
                 instance,
                 updateFiles,
-                setInitialValue
+                setInitialValue,
             }
 
         },

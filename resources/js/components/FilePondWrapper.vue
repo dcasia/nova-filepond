@@ -35,6 +35,7 @@
 <script>
 
     import { ref } from 'vue'
+    import cloneDeep from 'lodash/cloneDeep'
     import vueFilePond from 'vue-filepond'
     import FilePondPluginFileValidateType from 'filepond-plugin-file-validate-type'
     import FilePondPluginImagePreview from 'filepond-plugin-image-preview'
@@ -56,16 +57,16 @@
 
     export default {
         components: { FilePond },
-        props: [ 'field', 'resourceName', 'onChange', 'errors', 'columns', 'limit', 'allowReorder', 'allowRemove' ],
+        props: [ 'field', 'resourceName', 'onChange', 'errors', 'columns', 'limit', 'allowReorder', 'allowRemove', 'mode', 'action' ],
         setup(props) {
 
             return {
                 instance: ref(),
                 nameField: props.field.attribute,
-                files: [ ...props.field.value ],
+                files: cloneDeep(props.field.value),
                 cssVars: {
                     '--filepond-column': (100 / (props.columns || props.field.columns)) + '%',
-                    '--filepond-max-height': props.field.maxHeight
+                    '--filepond-max-height': props.field.maxHeight,
                 },
                 serverOptions: {
                     url: '/nova-vendor/nova-filepond',
@@ -74,6 +75,11 @@
                     process: {
                         url: '/process',
                         ondata: formData => {
+
+                            if (props.mode === 'action-modal') {
+                                formData.append('action', props.action)
+                            }
+
                             formData.append('attribute', props.field.attribute)
                             formData.append('resourceName', props.resourceName)
 
@@ -81,12 +87,12 @@
                         },
                         onerror: errors => {
                             props.errors.record(JSON.parse(errors))
-                        }
+                        },
                     },
                     headers: {
                         'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
-                    }
-                }
+                    },
+                },
             }
 
         },
