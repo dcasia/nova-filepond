@@ -71,7 +71,7 @@
                 serverOptions: {
                     url: '/nova-vendor/nova-filepond',
                     revert: '/revert',
-                    load: `/load/?serverId=`,
+                    load: `/load?serverId=`,
                     process: {
                         url: '/process',
                         ondata: formData => {
