@@ -15,6 +15,6 @@ class LoadController
     {
         $data = Data::fromEncrypted($request->input('serverId'));
 
-        return Storage::disk($data->disk)->response($data->path);
+        return Storage::disk($data->disk)->response($data->path, $data->filename);
     }
 }
